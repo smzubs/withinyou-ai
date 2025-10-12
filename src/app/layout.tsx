@@ -13,9 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "WithinYou.ai — Your dream life is within you. Discover it in 15 minutes.",
+  title: "WithinYou",
   description:
-  "A calm, text-based AI companion to discover who you are, design a life you love, and take tiny daily actions.",
+  "Your dream life is within you. Discover it in 15 minutes.",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/app-icon.png",
+  },
 };
 
 export default function RootLayout({
