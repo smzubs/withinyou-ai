@@ -1,3 +1,4 @@
+![WithinYou.ai Banner](./public/banner.png)
 WithinYou.ai
 “Your dream life is within you. Discover it in 15 minutes.”
 
