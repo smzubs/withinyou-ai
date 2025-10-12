@@ -12,8 +12,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-import type { Metadata } from "next";
-
 export const metadata: Metadata = {
   metadataBase: new URL("https://withinyou-ai.vercel.app"),
   title: "WithinYou",
