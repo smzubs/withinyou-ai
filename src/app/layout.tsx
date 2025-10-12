@@ -12,16 +12,36 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata = {
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  metadataBase: new URL("https://withinyou-ai.vercel.app"),
   title: "WithinYou",
-  description:
-  "Your dream life is within you. Discover it in 15 minutes.",
+  description: "Your dream life is within you. Discover it in 15 minutes.",
+  alternates: { canonical: "/" },
   icons: {
     icon: "/favicon.png",
     shortcut: "/favicon.png",
-    apple: "/app-icon.png",
+    apple: "/app-icon.png"
   },
+  manifest: "/site.webmanifest",
+  openGraph: {
+    title: "WithinYou",
+    description: "Your dream life is within you. Discover it in 15 minutes.",
+    url: "/",
+    siteName: "WithinYou",
+    images: [{ url: "/og.png", width: 1200, height: 630 }],
+    locale: "en_US",
+    type: "website"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "WithinYou",
+    description: "Your dream life is within you. Discover it in 15 minutes.",
+    images: ["/og.png"]
+  }
 };
+
 
 export default function RootLayout({
   children,

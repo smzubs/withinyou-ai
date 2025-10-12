@@ -1,0 +1,17 @@
+{
+    "name": "WithinYou",
+    "short_name": "WithinYou",
+    "description": "Your dream life is within you. Discover it in 15 minutes.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0E1116",
+    "theme_color": "#0E1116",
+    "icons": [
+      {
+        "src": "/app-icon.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ]
+  }
+  
