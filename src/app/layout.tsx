@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import Script from "next/script"; // ← ADD THIS
 
 const siteName = "WithinYou";
 const domain = "https://withinyouai.com";
@@ -53,7 +54,7 @@ export const metadata: Metadata = {
     description,
     images: [
       {
-        url: "/og.png", // we saved this earlier
+        url: "/og.png",
         width: 1200,
         height: 630,
         alt: "WithinYou — Discover your dream life in 15 minutes",
@@ -67,9 +68,7 @@ export const metadata: Metadata = {
     images: ["/og.png"],
   },
   icons: {
-    icon: [
-      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
-    ],
+    icon: [{ url: "/favicon.png", type: "image/png", sizes: "32x32" }],
     apple: [{ url: "/app-icon.png", sizes: "512x512", type: "image/png" }],
   },
   manifest: "/site.webmanifest",
@@ -91,6 +90,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        {/* Google Analytics (gtag.js) */}
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-69K81LZV5Z"
+        />
+        <Script id="ga-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-69K81LZV5Z');
+          `}
+        </Script>
+
         {/* JSON-LD for rich results */}
         <script
           type="application/ld+json"
