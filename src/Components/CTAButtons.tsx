@@ -5,6 +5,7 @@ import { track } from "@/lib/gtag";
 export default function CTAButtons() {
   return (
     <div className="mt-8 flex items-center justify-center gap-3">
+      {/* Primary Button */}
       <a
         href="#"
         onClick={(e) => {
@@ -19,6 +20,7 @@ export default function CTAButtons() {
         Start Discovery (15 min)
       </a>
 
+      {/* Secondary Button */}
       <a
         href="#"
         onClick={(e) => {
