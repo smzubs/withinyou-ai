@@ -1,120 +1,31 @@
-import type { Metadata } from "next";
+// src/app/layout.tsx
 import "./globals.css";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import Script from "next/script"; // ← ADD THIS
-
-const siteName = "WithinYou";
-const domain = "https://withinyouai.com";
-const title = "WithinYou — Your dream life is within you. Discover it in 15 minutes.";
-const description =
-  "WithinYou helps you uncover your inner strengths, values, and life direction in just 15 minutes — through an intelligent, personalized discovery experience.";
-
-export const metadata: Metadata = {
-  metadataBase: new URL(domain),
-  title: {
-    default: title,
-    template: `%s — ${siteName}`,
-  },
-  description,
-  applicationName: siteName,
-  keywords: [
-    "self discovery",
-    "life clarity",
-    "purpose",
-    "vision",
-    "values",
-    "goals",
-    "personality",
-    "coaching",
-    "WithinYou",
-  ],
-  authors: [{ name: "WithinYou" }],
-  creator: "WithinYou",
-  publisher: "WithinYou",
-  alternates: {
-    canonical: domain,
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-      "max-video-preview": -1,
-    },
-  },
-  openGraph: {
-    type: "website",
-    url: domain,
-    siteName,
-    title,
-    description,
-    images: [
-      {
-        url: "/og.png",
-        width: 1200,
-        height: 630,
-        alt: "WithinYou — Discover your dream life in 15 minutes",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title,
-    description,
-    images: ["/og.png"],
-  },
-  icons: {
-    icon: [{ url: "/favicon.png", type: "image/png", sizes: "32x32" }],
-    apple: [{ url: "/app-icon.png", sizes: "512x512", type: "image/png" }],
-  },
-  manifest: "/site.webmanifest",
-};
+import Script from "next/script";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: siteName,
-    url: domain,
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${domain}/?q={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
-  };
+  const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
   return (
     <html lang="en">
       <head>
-        {/* Google Analytics (gtag.js) */}
-        <Script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-69K81LZV5Z"
-        />
-        <Script id="ga-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-69K81LZV5Z');
-          `}
-        </Script>
-
-        {/* JSON-LD for rich results */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+        {GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="gtag-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_ID}');
+              `}
+            </Script>
+          </>
+        )}
       </head>
-      <body>
-        {children}
-        <Analytics />
-        <SpeedInsights />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
