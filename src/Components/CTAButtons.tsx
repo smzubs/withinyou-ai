@@ -9,7 +9,10 @@ export default function CTAButtons() {
         href="#"
         onClick={(e) => {
           e.preventDefault();
-          track("cta_click", { location: "hero", label: "Start Discovery Button" });
+          track("cta_click", {
+            location: "hero",
+            label: "Start Discovery Button",
+          });
         }}
         className="rounded-xl px-5 py-3 bg-white text-black font-medium hover:opacity-90 transition"
       >
@@ -20,7 +23,10 @@ export default function CTAButtons() {
         href="#"
         onClick={(e) => {
           e.preventDefault();
-          track("gift_click", { location: "hero", label: "Gift Button" });
+          track("gift_click", {
+            location: "hero",
+            label: "Gift of Clarity Button",
+          });
         }}
         className="rounded-xl px-5 py-3 border border-white/30 text-white/90 hover:bg-white/10 transition"
       >
