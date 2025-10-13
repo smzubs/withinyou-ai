@@ -1,4 +1,4 @@
-import CTAButtons from "@/components/CTAButtons";
+import CTAButtons from "../components/CTAButtons"; // or "@/components/CTAButtons" if Fix B
 
 export default function Home() {
   return (
@@ -11,7 +11,6 @@ export default function Home() {
           Your dream life is within you. Discover it in 15 minutes.
         </p>
 
-        {/* Client-only interactions live here */}
         <CTAButtons />
 
         <p className="mt-6 text-xs text-white/50">
