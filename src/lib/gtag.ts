@@ -1,41 +1,34 @@
-// src/lib/gtag.ts
+"use client";
 
-// Your GA4 Measurement ID must be available on the client.
-// Add it to .env.local as: NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
-export const GA_ID = process.env.NEXT_PUBLIC_GA_ID || "";
+/**
+ * GA4 helpers without using `any` so ESLint passes.
+ */
 
-// Make TypeScript aware of window.gtag
+export const GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? "";
+
+/** Is GA available on the client and GA_ID set? */
+function hasGA() {
+  return typeof window !== "undefined" && typeof window.gtag === "function" && GA_ID.length > 0;
+}
+
+// Type for GA4 event params (string/number/boolean/undefined is enough for most cases)
+export type GtagParams = Record<string, string | number | boolean | undefined>;
+
+// Make TS aware of window.gtag if it exists (loaded by the script tag in your layout)
 declare global {
   interface Window {
-    gtag: (...args: any[]) => void;
+    gtag?: (...args: unknown[]) => void;
   }
 }
 
-/**
- * Send a page view to GA4.
- * Call this if you manually track route changes (optional for now).
- */
+/** Track a page_view */
 export function pageview(path: string) {
-  if (typeof window === "undefined" || !GA_ID) return;
-  window.gtag?.("config", GA_ID, {
-    page_path: path,
-  });
+  if (!hasGA()) return;
+  window.gtag!("config", GA_ID, { page_path: path });
 }
 
-/**
- * Send a custom event to GA4.
- * In dev, it adds debug_mode so the event appears instantly in DebugView.
- *
- * Usage:
- *   track("cta_click", { location: "hero", label: "Start Discovery Button" });
- */
-export function track(event: string, params: Record<string, any> = {}) {
-  if (typeof window === "undefined" || !GA_ID) return;
-
-  const payload =
-    process.env.NODE_ENV !== "production"
-      ? { ...params, debug_mode: true } // shows up fast in GA4 DebugView
-      : params;
-
-  window.gtag?.("event", event, payload);
+/** Fire a custom event */
+export function track(eventName: string, params: GtagParams = {}) {
+  if (!hasGA()) return;
+  window.gtag!("event", eventName, params);
 }
