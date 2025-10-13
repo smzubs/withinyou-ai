@@ -1,4 +1,5 @@
-'use client';
+// src/app/page.tsx
+"use client";
 
 import { track } from "@/lib/gtag";
 
@@ -13,13 +14,16 @@ export default function Home() {
           Your dream life is within you. Discover it in 15 minutes.
         </p>
 
-        {/* CTA Buttons (inline to avoid import issues) */}
         <div className="mt-8 flex items-center justify-center gap-3">
           <a
             href="#"
             onClick={(e) => {
               e.preventDefault();
-              track("cta_click", { location: "hero", label: "Start Discovery Button" });
+              track("cta_click", {
+                location: "hero",
+                label: "Start Discovery Button",
+                debug_mode: true,       // helps show up in DebugView quickly
+              });
             }}
             className="rounded-xl px-5 py-3 bg-white text-black font-medium hover:opacity-90 transition"
           >
@@ -30,7 +34,11 @@ export default function Home() {
             href="#"
             onClick={(e) => {
               e.preventDefault();
-              track("gift_click", { location: "hero", label: "Gift of Clarity Button" });
+              track("gift_click", {
+                location: "hero",
+                label: "Gift of Clarity Button",
+                debug_mode: true,
+              });
             }}
             className="rounded-xl px-5 py-3 border border-white/30 text-white/90 hover:bg-white/10 transition"
           >
