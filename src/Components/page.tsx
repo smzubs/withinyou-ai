@@ -1,4 +1,4 @@
-import CTAButtons from "src/components/CTAButtons"; // or "@/components/CTAButtons" if Fix B
+import CTAButtons from "../components/CTAButtons"; // or "@/components/CTAButtons" if Fix B
 
 export default function Home() {
   return (
