@@ -3,22 +3,19 @@ import "./globals.css";
 import Script from "next/script";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const GA_ID = "G-69K81LZV5Z"; // Your GA ID here
+  const GA_ID = "G-69K81LZV5Z"; // your GA ID
 
   return (
     <html lang="en">
       <body>
         {children}
 
-        {/* --- Google Analytics (GA4) --- */}
+        {/* Google Analytics (GA4) */}
         <>
-          {/* Loads GA library */}
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
             strategy="afterInteractive"
           />
-
-          {/* Initializes gtag and GA property */}
           <Script id="gtag-init" strategy="afterInteractive">
             {`
               window.dataLayer = window.dataLayer || [];
