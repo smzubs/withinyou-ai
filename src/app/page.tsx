@@ -303,11 +303,12 @@ export default function Home() {
       >
         <AnimatedBackground />
 
+        {/* Top Navy Gradient Fade - Ends BEFORE Logo */}
         <div 
           className="absolute top-0 left-0 right-0 pointer-events-none z-20"
           style={{
-            height: "200px",
-            background: "linear-gradient(180deg, rgba(15, 25, 45, 0.95) 0%, rgba(10, 14, 31, 0.85) 25%, rgba(7, 11, 24, 0.6) 50%, rgba(5, 8, 20, 0.3) 75%, transparent 100%)",
+            height: "100px",
+            background: "linear-gradient(180deg, rgba(15, 25, 45, 0.9) 0%, rgba(10, 14, 31, 0.5) 40%, rgba(7, 11, 24, 0.2) 70%, transparent 100%)",
           }}
         />
 
