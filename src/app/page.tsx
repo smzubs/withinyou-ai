@@ -3,7 +3,7 @@
 
 import Image from "next/image";
 import { track } from "../lib/gtag";
-import AnimatedBackground from "@/components/AnimatedBackground";
+import AnimatedBackground from "../components/AnimatedBackground";
 
 export default function Home() {
   return (
