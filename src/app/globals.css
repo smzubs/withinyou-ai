@@ -1,26 +1,560 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ===============================
+   🔥 NUCLEAR RESET - Kill All Gaps & Navy Bar
+================================= */
+* {
+  box-sizing: border-box;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden;
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden;
+  min-height: 100%;
+  position: relative;
+}
+
+#__next,
+#__next > div {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+main {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block;
+}
+
+/* ===============================
+   🪶 GLOBAL RESET & SMOOTH FEEL
+================================= */
+html,
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #050814;
+  color: white;
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbars for cleaner aesthetic */
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ===============================
+   🎨 LUXURY BRAND COLOR VARIABLES
+================================= */
+:root {
+  /* Luxury Primary Palette */
+  --color-rose-gold: #d4afb9;
+  --color-rose-gold-light: #e8dcc4;
+  --color-rose-mauve: #b8a8c4;
+  
+  /* Luxury Secondary - Teal */
+  --color-teal-deep: #1b4d4d;
+  --color-teal-medium: #2a6b6b;
+  --color-teal-accent: #4a9b9b;
+  
+  /* Neutral Luxury */
+  --color-obsidian: #050814;
+  --color-obsidian-light: #0a0e1f;
+  --color-stone-warm: #e8dcc4;
+  
+  /* Background Colors */
+  --color-bg-dark: #050814;
+  --color-bg-navy: #070b18;
+  
+  /* Font Variables */
+  --font-display: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ===============================
+   🎨 CUSTOM COLOR UTILITY CLASSES
+================================= */
+.rose-gold {
+  color: #d4afb9;
+}
+
+.bg-rose-gold {
+  background-color: #d4afb9;
+}
+
+.border-rose-gold {
+  border-color: #d4afb9;
+}
+
+.text-rose-gold {
+  color: #d4afb9;
+}
+
+.teal-luxury {
+  color: #1b4d4d;
+}
+
+.bg-teal-luxury {
+  background-color: #1b4d4d;
+}
+
+.stone-warm {
+  color: #e8dcc4;
+}
+
+/* ===============================
+   ✨ PREMIUM GLOW & TEXT EFFECTS
+================================= */
+.text-glow-premium {
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.6),
+    0 0 16px rgba(212, 175, 185, 0.4),
+    0 0 32px rgba(232, 220, 196, 0.3),
+    0 0 48px rgba(184, 168, 196, 0.2);
+}
+
+.img-glow-premium {
+  filter:
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 0 20px rgba(212, 175, 185, 0.35))
+    drop-shadow(0 0 40px rgba(232, 220, 196, 0.25));
+}
+
+/* Luxury gradient for brand elements */
+.brand-gradient-luxury {
+  background: linear-gradient(
+    135deg,
+    #d4afb9 0%,
+    #e8dcc4 50%,
+    #b8a8c4 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Enhanced hover glow effect */
+.glow-hover:hover {
+  filter: drop-shadow(0 0 16px rgba(212, 175, 185, 0.5));
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ===============================
+   🎯 PREMIUM BUTTON STYLES
+================================= */
+.premium-btn-primary {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: all 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(212, 175, 185, 0.2);
+  text-decoration: none;
+}
+
+.premium-btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 50px rgba(27, 77, 77, 0.4);
+  border-color: rgba(212, 175, 185, 0.4);
+}
+
+.premium-btn-secondary {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: all 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  color: rgba(212, 175, 185, 0.95);
+  background: transparent;
+  text-decoration: none;
+}
+
+.premium-btn-secondary:hover {
+  transform: translateY(-3px);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* ===============================
+   🌫 BACKDROP & DEPTH EFFECTS
+================================= */
+.hero-overlay {
+  background: radial-gradient(
+    ellipse at top,
+    rgba(255, 255, 255, 0.03),
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.glass-effect {
+  background: rgba(15, 30, 61, 0.4);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(212, 175, 185, 0.1);
+}
+
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+.backdrop-blur-md {
+  backdrop-filter: blur(12px);
+}
+
+.backdrop-blur-lg {
+  backdrop-filter: blur(24px);
+}
+
+/* ===============================
+   🎞️ ENTRANCE ANIMATIONS
+================================= */
+@keyframes fadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.15;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.25;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes shimmer-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Breathing orb animations - slow and calming */
+@keyframes breathing-orb-1 {
+  0%, 100% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.25;
+  }
+  33% {
+    transform: scale(1.1) translate(20px, -20px);
+    opacity: 0.3;
+  }
+  66% {
+    transform: scale(0.95) translate(-10px, 10px);
+    opacity: 0.2;
+  }
+}
+
+@keyframes breathing-orb-2 {
+  0%, 100% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.2;
+  }
+  33% {
+    transform: scale(1.05) translate(-15px, 15px);
+    opacity: 0.25;
+  }
+  66% {
+    transform: scale(0.98) translate(10px, -10px);
+    opacity: 0.15;
+  }
+}
+
+@keyframes breathing-orb-3 {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.08);
+    opacity: 0.2;
+  }
+}
+
+/* Gradient shift animation - very slow and subtle */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Light rays rotation - extremely slow */
+@keyframes light-rays {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Animation utility classes */
+.animate-fadeUp {
+  animation: fadeUp 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 1.5s ease-in both;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 8s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 3s linear infinite;
+}
+
+.animate-breathing-orb-1 {
+  animation: breathing-orb-1 20s ease-in-out infinite;
+}
+
+.animate-breathing-orb-2 {
+  animation: breathing-orb-2 25s ease-in-out infinite;
+}
+
+.animate-breathing-orb-3 {
+  animation: breathing-orb-3 15s ease-in-out infinite;
+}
+
+.animate-gradient-shift {
+  animation: gradient-shift 30s ease infinite;
+}
+
+.animate-light-rays {
+  animation: light-rays 120s linear infinite;
+}
+
+/* ===============================
+   📱 RESPONSIVE UTILITIES
+================================= */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+  }
+  
+  .premium-btn-primary,
+  .premium-btn-secondary {
+    width: 100%;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
+}
+
+/* ===============================
+   ♿ ACCESSIBILITY
+================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+/* Focus visible styles for accessibility */
+*:focus-visible {
+  outline: 2px solid rgba(212, 175, 185, 0.6);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ===============================
+   🎨 CUSTOM GRADIENT UTILITIES
+================================= */
+.gradient-rose-to-teal {
+  background: linear-gradient(135deg, #d4afb9 0%, #1b4d4d 100%);
+}
+
+.gradient-teal-to-rose {
+  background: linear-gradient(135deg, #1b4d4d 0%, #d4afb9 100%);
+}
+
+.gradient-luxury-text {
+  background: linear-gradient(135deg, #d4afb9 0%, #f0e4d7 40%, #e8dcc4 60%, #b8a8c4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ===============================
+   💎 LUXURY CARD EFFECTS
+================================= */
+.luxury-card {
+  background: rgba(15, 30, 61, 0.3);
+  border: 1px solid rgba(212, 175, 185, 0.15);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.luxury-card:hover {
+  border-color: rgba(212, 175, 185, 0.4);
+  box-shadow: 0 20px 50px rgba(212, 175, 185, 0.2);
+  transform: translateY(-4px);
+}
+
+/* ===============================
+   🌟 PREMIUM DECORATIVE ELEMENTS
+================================= */
+.decorative-line-luxury {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(212, 175, 185, 0.7) 50%,
+    transparent 100%
+  );
+}
+
+.dot-pattern {
+  background-image: radial-gradient(
+    rgba(212, 175, 185, 0.1) 1px,
+    transparent 1px
+  );
+  background-size: 20px 20px;
+}
+
+/* ===============================
+   📝 TEXT UTILITIES
+================================= */
+.text-balance {
+  text-wrap: balance;
+}
+
+.text-pretty {
+  text-wrap: pretty;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+/* ===============================
+   🎭 LOADING STATES
+================================= */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(212, 175, 185, 0.05) 0%,
+    rgba(212, 175, 185, 0.15) 50%,
+    rgba(212, 175, 185, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ===============================
+   🔲 SELECTION STYLING
+================================= */
+::selection {
+  background-color: rgba(212, 175, 185, 0.3);
+  color: white;
+}
+
+::-moz-selection {
+  background-color: rgba(212, 175, 185, 0.3);
+  color: white;
 }

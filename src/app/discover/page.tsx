@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { track } from "@/lib/gtag";
+// If you still want to navigate somewhere later you can keep this import
+// import { useRouter } from "next/navigation";
+import { track } from "../../lib/gtag"; // relative path from /app/discover to /lib/gtag
 
 type Question =
   | {
@@ -68,12 +69,17 @@ const QUESTIONS: Question[] = [
 ];
 
 export default function DiscoverPage() {
-  const router = useRouter();
+  // const router = useRouter();
 
   // answers keyed by question.id
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [step, setStep] = useState<number>(0);
   const [error, setError] = useState<string>("");
+
+  // summary UI state
+  const [showSummary, setShowSummary] = useState(false);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [summaryText, setSummaryText] = useState<string>("");
 
   const total = QUESTIONS.length;
   const q = QUESTIONS[step];
@@ -89,6 +95,42 @@ export default function DiscoverPage() {
     track("question_answered", { id, value });
   }
 
+  async function handleFinish() {
+    try {
+      setLoadingSummary(true);
+      setShowSummary(true); // show the summary panel (will display loading state)
+
+      // Build array of { question, value } for the API
+      const payload = {
+        answers: QUESTIONS.map((qq) => ({
+          question: qq.title,
+          value: answers[qq.id] || "",
+        })),
+      };
+
+      // 👇 IMPORTANT: relative path in dev
+      const res = await fetch("/api/clarity-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || `Request failed (${res.status})`);
+      }
+
+      const json = await res.json();
+      setSummaryText(json.summary || "Thanks! (No summary returned.)");
+    } catch (e: any) {
+      setSummaryText(
+        `Sorry, something went wrong generating your summary.\n\n${e?.message || e}`
+      );
+    } finally {
+      setLoadingSummary(false);
+    }
+  }
+
   function next() {
     // validation if required
     if (q.required && !answers[q.id]) {
@@ -100,11 +142,10 @@ export default function DiscoverPage() {
       setStep(nextIndex);
       track("question_step_next", { step: nextIndex + 1, id: QUESTIONS[nextIndex].id });
     } else {
-      // finished
+      // finished -> call API route then show summary
       track("discovery_completed", { total_questions: total });
-      router.push("/discover/summary"); // you can add a real summary route later
-      // For now, inline "summary" screen:
-      setShowSummary(true);
+      handleFinish();
+      // If you later want a separate page you could: router.push("/discover/summary")
     }
   }
 
@@ -116,14 +157,8 @@ export default function DiscoverPage() {
     track("question_step_back", { step: prev + 1, id: QUESTIONS[prev].id });
   }
 
-  // --- lightweight inline “summary” (no extra route needed yet) ---
-  const [showSummary, setShowSummary] = useState(false);
+  // --- summary screen ---
   if (showSummary) {
-    const pairs = QUESTIONS.map((qq) => ({
-      label: qq.title,
-      value: answers[qq.id] || "—",
-    }));
-
     return (
       <main className="min-h-screen bg-[#0E1116] text-white flex items-center justify-center p-6">
         <div className="w-full max-w-2xl">
@@ -131,17 +166,23 @@ export default function DiscoverPage() {
             Your Clarity Snapshot
           </h1>
           <p className="mt-2 text-white/70">
-            Thanks for sharing. Here’s a summary of your responses:
+            Thanks for sharing. Here’s a summary of your responses and next steps:
           </p>
 
+          {/* Loading indicator or the AI summary */}
+          <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5 whitespace-pre-wrap">
+            {loadingSummary ? "Generating your personalized summary…" : summaryText}
+          </div>
+
+          {/* Optional: also echo raw selections below */}
           <div className="mt-6 space-y-4">
-            {pairs.map((p) => (
+            {QUESTIONS.map((qq) => (
               <div
-                key={p.label}
+                key={qq.id}
                 className="rounded-xl border border-white/10 p-4 bg-white/5"
               >
-                <div className="text-sm text-white/50">{p.label}</div>
-                <div className="mt-1 text-white">{p.value}</div>
+                <div className="text-sm text-white/50">{qq.title}</div>
+                <div className="mt-1 text-white">{answers[qq.id] || "—"}</div>
               </div>
             ))}
           </div>
@@ -154,6 +195,7 @@ export default function DiscoverPage() {
                 setStep(0);
                 setAnswers({});
                 setShowSummary(false);
+                setSummaryText("");
               }}
             >
               Restart
@@ -205,24 +247,25 @@ export default function DiscoverPage() {
           <div className="mt-6 space-y-3">
             {q.type === "single" && (
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                {q.options.map((option) => {
-                  const selected = answers[q.id] === option;
-                  return (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => handleSelect(q.id, option)}
-                      className={[
-                        "rounded-xl px-4 py-3 text-left border transition",
-                        selected
-                          ? "bg-white text-black border-white"
-                          : "border-white/20 hover:bg-white/10",
-                      ].join(" ")}
-                    >
-                      {option}
-                    </button>
-                  );
-                })}
+                {"options" in q &&
+                  q.options.map((option) => {
+                    const selected = answers[q.id] === option;
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => handleSelect(q.id, option)}
+                        className={[
+                          "rounded-xl px-4 py-3 text-left border transition",
+                          selected
+                            ? "bg-white text-black border-white"
+                            : "border-white/20 hover:bg-white/10",
+                        ].join(" ")}
+                      >
+                        {option}
+                      </button>
+                    );
+                  })}
               </div>
             )}
 
