@@ -391,7 +391,7 @@ export default function Home() {
               animationDelay: "240ms",
             }}
           >
-            Unlock the Life You're Meant to Live
+            Unlock the Life You&apos;re Meant to Live
           </h1>
 
           <div 
