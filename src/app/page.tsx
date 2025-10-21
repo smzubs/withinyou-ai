@@ -1,18 +1,17 @@
-// src/app/page.tsx - ALL IN ONE FILE (NO IMPORTS!)
+// src/app/page.tsx - UPDATED WITH FLAT LOGO
 "use client";
 
 import Image from "next/image";
 import { track } from "../lib/gtag";
 import { useEffect, useRef } from "react";
 
-// AnimatedBackground Component - INLINE
-function AnimatedBackground() {
+// DREAMY FIREFLY ANIMATION - INLINE
+function DreamyFireflyAnimation() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -23,84 +22,93 @@ function AnimatedBackground() {
     setCanvasSize();
     window.addEventListener("resize", setCanvasSize);
 
-    class LuxuryParticle {
-      x: number;
-      y: number;
-      baseX: number;
-      baseY: number;
-      size: number;
-      speedX: number;
-      speedY: number;
-      opacity: number;
-      color: string;
-      pulseSpeed: number;
-      pulsePhase: number;
-      angle: number;
-      distance: number;
+    class FireflyParticle {
+      x: number; y: number; size: number; speedX: number; speedY: number;
+      opacity: number; color: string; pulseSpeed: number; pulsePhase: number;
+      glowIntensity: number; wanderAngle: number; wanderSpeed: number;
 
       constructor() {
-        this.baseX = this.x = Math.random() * canvas.width;
-        this.baseY = this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 3 + 0.5;
-        this.speedX = (Math.random() - 0.5) * 0.15;
-        this.speedY = (Math.random() - 0.5) * 0.15;
-        this.opacity = Math.random() * 0.4 + 0.1;
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 1.2 + 0.2;
+        this.speedX = (Math.random() - 0.5) * 0.08;
+        this.speedY = (Math.random() - 0.5) * 0.08;
         
         const colors = [
-          "rgba(212, 175, 185, ",
-          "rgba(232, 220, 196, ",
-          "rgba(184, 168, 196, ",
-          "rgba(74, 155, 155, ",
+          "rgba(52, 211, 153, ", "rgba(34, 197, 194, ", "rgba(59, 130, 246, ",
+          "rgba(96, 165, 250, ", "rgba(45, 212, 191, ", "rgba(16, 185, 129, ",
         ];
         this.color = colors[Math.floor(Math.random() * colors.length)];
-        this.pulseSpeed = Math.random() * 0.015 + 0.008;
+        
+        this.pulseSpeed = Math.random() * 0.004 + 0.002;
         this.pulsePhase = Math.random() * Math.PI * 2;
-        this.angle = 0;
-        this.distance = Math.random() * 3 + 1;
+        this.glowIntensity = Math.random() * 0.15 + 0.05;
+        this.wanderAngle = Math.random() * Math.PI * 2;
+        this.wanderSpeed = Math.random() * 0.02 + 0.01;
       }
 
       update(mouseX: number, mouseY: number) {
-        this.x += this.speedX;
-        this.y += this.speedY;
+        this.wanderAngle += (Math.random() - 0.5) * 0.1;
+        this.x += Math.cos(this.wanderAngle) * this.wanderSpeed + this.speedX;
+        this.y += Math.sin(this.wanderAngle) * this.wanderSpeed + this.speedY;
         
         const dx = mouseX - this.x;
         const dy = mouseY - this.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         
-        if (dist < 150) {
-          const force = (150 - dist) / 150;
-          this.x -= (dx / dist) * force * 0.5;
-          this.y -= (dy / dist) * force * 0.5;
+        if (dist < 200) {
+          const force = (200 - dist) / 200;
+          this.x -= (dx / dist) * force * 0.15;
+          this.y -= (dy / dist) * force * 0.15;
         }
 
-        this.angle += 0.001;
-        this.x += Math.cos(this.angle) * this.distance * 0.1;
-        this.y += Math.sin(this.angle) * this.distance * 0.1;
-
-        if (this.x > canvas.width + 50) this.x = -50;
-        if (this.x < -50) this.x = canvas.width + 50;
-        if (this.y > canvas.height + 50) this.y = -50;
-        if (this.y < -50) this.y = canvas.height + 50;
+        if (this.x > canvas.width + 100) this.x = -100;
+        if (this.x < -100) this.x = canvas.width + 100;
+        if (this.y > canvas.height + 100) this.y = -100;
+        if (this.y < -100) this.y = canvas.height + 100;
 
         this.pulsePhase += this.pulseSpeed;
-        this.opacity = (Math.sin(this.pulsePhase) + 1) * 0.2 + 0.08;
+        const pulse = Math.sin(this.pulsePhase);
+        this.opacity = (pulse * 0.5 + 0.5) * this.glowIntensity;
       }
 
       draw() {
         if (!ctx) return;
         
-        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 3);
-        gradient.addColorStop(0, this.color + this.opacity + ")");
-        gradient.addColorStop(1, this.color + "0)");
+        const glowRadius = this.size * 8;
         
-        ctx.fillStyle = gradient;
+        const outerGlow = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, glowRadius * 2);
+        outerGlow.addColorStop(0, this.color + (this.opacity * 0.3) + ")");
+        outerGlow.addColorStop(0.5, this.color + (this.opacity * 0.1) + ")");
+        outerGlow.addColorStop(1, this.color + "0)");
+        
+        ctx.fillStyle = outerGlow;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size * 3, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, glowRadius * 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        const innerGlow = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, glowRadius);
+        innerGlow.addColorStop(0, this.color + (this.opacity * 0.8) + ")");
+        innerGlow.addColorStop(0.5, this.color + (this.opacity * 0.4) + ")");
+        innerGlow.addColorStop(1, this.color + "0)");
+        
+        ctx.fillStyle = innerGlow;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, glowRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        const core = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 2);
+        core.addColorStop(0, this.color + this.opacity + ")");
+        core.addColorStop(1, this.color + (this.opacity * 0.6) + ")");
+        
+        ctx.fillStyle = core;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * 2, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
-    const drawConnections = (particles: LuxuryParticle[]) => {
+    const drawConnections = (particles: FireflyParticle[]) => {
       if (!ctx) return;
       
       for (let i = 0; i < particles.length; i++) {
@@ -109,48 +117,61 @@ function AnimatedBackground() {
           const dy = particles[i].y - particles[j].y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
-          if (distance < 120) {
-            ctx.strokeStyle = `rgba(212, 175, 185, ${0.15 * (1 - distance / 120)})`;
-            ctx.lineWidth = 0.5;
+          if (distance < 150) {
+            const opacity = (1 - distance / 150);
+            
+            const gradient = ctx.createLinearGradient(
+              particles[i].x, particles[i].y, particles[j].x, particles[j].y
+            );
+            gradient.addColorStop(0, `rgba(52, 211, 153, ${opacity * 0.08})`);
+            gradient.addColorStop(0.5, `rgba(34, 197, 194, ${opacity * 0.12})`);
+            gradient.addColorStop(1, `rgba(59, 130, 246, ${opacity * 0.08})`);
+            
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 0.8;
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
             ctx.stroke();
+            
+            if (distance < 80) {
+              const midX = (particles[i].x + particles[j].x) / 2;
+              const midY = (particles[i].y + particles[j].y) / 2;
+              
+              const nodeGradient = ctx.createRadialGradient(midX, midY, 0, midX, midY, 2);
+              nodeGradient.addColorStop(0, `rgba(34, 197, 194, ${opacity * 0.3})`);
+              nodeGradient.addColorStop(1, `rgba(34, 197, 194, 0)`);
+              
+              ctx.fillStyle = nodeGradient;
+              ctx.beginPath();
+              ctx.arc(midX, midY, 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
           }
         }
       }
     };
 
-    const particles: LuxuryParticle[] = [];
-    const particleCount = 100;
-
-    for (let i = 0; i < particleCount; i++) {
-      particles.push(new LuxuryParticle());
-    }
-
     let waveOffset1 = 0;
     let waveOffset2 = 0;
     
-    const drawAuroraWaves = () => {
+    const drawAmbientWaves = () => {
       if (!ctx) return;
       
       const gradient1 = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient1.addColorStop(0, "rgba(27, 77, 77, 0.04)");
-      gradient1.addColorStop(0.5, "rgba(212, 175, 185, 0.06)");
-      gradient1.addColorStop(1, "rgba(184, 168, 196, 0.04)");
+      gradient1.addColorStop(0, "rgba(16, 185, 129, 0.02)");
+      gradient1.addColorStop(0.5, "rgba(34, 197, 194, 0.04)");
+      gradient1.addColorStop(1, "rgba(52, 211, 153, 0.02)");
 
       ctx.fillStyle = gradient1;
       ctx.beginPath();
       
-      for (let x = 0; x < canvas.width; x += 8) {
-        const y = Math.sin((x + waveOffset1) * 0.004) * 60 + 
-                  Math.sin((x + waveOffset1) * 0.008) * 30 + 
-                  canvas.height * 0.25;
-        if (x === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
+      for (let x = 0; x < canvas.width; x += 10) {
+        const y = Math.sin((x + waveOffset1) * 0.002) * 40 + 
+                  Math.sin((x + waveOffset1) * 0.004) * 20 + 
+                  canvas.height * 0.2;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
       }
       
       ctx.lineTo(canvas.width, canvas.height);
@@ -159,22 +180,19 @@ function AnimatedBackground() {
       ctx.fill();
 
       const gradient2 = ctx.createLinearGradient(0, canvas.height, canvas.width, 0);
-      gradient2.addColorStop(0, "rgba(184, 168, 196, 0.03)");
-      gradient2.addColorStop(0.5, "rgba(74, 155, 155, 0.05)");
-      gradient2.addColorStop(1, "rgba(212, 175, 185, 0.03)");
+      gradient2.addColorStop(0, "rgba(59, 130, 246, 0.02)");
+      gradient2.addColorStop(0.5, "rgba(45, 212, 191, 0.03)");
+      gradient2.addColorStop(1, "rgba(96, 165, 250, 0.02)");
 
       ctx.fillStyle = gradient2;
       ctx.beginPath();
       
-      for (let x = 0; x < canvas.width; x += 8) {
-        const y = Math.sin((x + waveOffset2) * 0.003) * 80 + 
-                  Math.cos((x + waveOffset2) * 0.006) * 40 + 
-                  canvas.height * 0.7;
-        if (x === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
+      for (let x = 0; x < canvas.width; x += 10) {
+        const y = Math.sin((x + waveOffset2) * 0.0015) * 60 + 
+                  Math.cos((x + waveOffset2) * 0.003) * 30 + 
+                  canvas.height * 0.75;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
       }
       
       ctx.lineTo(canvas.width, 0);
@@ -182,9 +200,16 @@ function AnimatedBackground() {
       ctx.closePath();
       ctx.fill();
 
-      waveOffset1 += 0.25;
-      waveOffset2 += 0.18;
+      waveOffset1 += 0.12;
+      waveOffset2 += 0.08;
     };
+
+    const particles: FireflyParticle[] = [];
+    const particleCount = 120;
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new FireflyParticle());
+    }
 
     let mouseX = canvas.width / 2;
     let mouseY = canvas.height / 2;
@@ -199,10 +224,10 @@ function AnimatedBackground() {
     const animate = () => {
       if (!ctx) return;
       
-      ctx.fillStyle = "rgba(5, 8, 20, 0.12)";
+      ctx.fillStyle = "rgba(8, 24, 24, 0.25)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      drawAuroraWaves();
+      drawAmbientWaves();
 
       particles.forEach((particle) => {
         particle.update(mouseX, mouseY);
@@ -222,70 +247,7 @@ function AnimatedBackground() {
     };
   }, []);
 
-  return (
-    <>
-      <canvas
-        ref={canvasRef}
-        className="fixed top-0 left-0 w-full h-full pointer-events-none"
-        style={{ zIndex: 1 }}
-      />
-
-      <div className="fixed top-0 left-0 w-full h-full pointer-events-none" style={{ zIndex: 2 }}>
-        <div
-          className="absolute w-[700px] h-[700px] rounded-full opacity-25 animate-breathing-orb-1"
-          style={{
-            background: "radial-gradient(circle, rgba(212, 175, 185, 0.5) 0%, rgba(232, 220, 196, 0.3) 40%, transparent 70%)",
-            top: "5%",
-            right: "5%",
-            filter: "blur(60px)",
-          }}
-        />
-        
-        <div
-          className="absolute w-[600px] h-[600px] rounded-full opacity-20 animate-breathing-orb-2"
-          style={{
-            background: "radial-gradient(circle, rgba(27, 77, 77, 0.6) 0%, rgba(74, 155, 155, 0.4) 40%, transparent 70%)",
-            bottom: "10%",
-            left: "5%",
-            filter: "blur(60px)",
-          }}
-        />
-
-        <div
-          className="absolute w-[500px] h-[500px] rounded-full opacity-15 animate-breathing-orb-3"
-          style={{
-            background: "radial-gradient(circle, rgba(184, 168, 196, 0.5) 0%, rgba(212, 175, 185, 0.3) 40%, transparent 70%)",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            filter: "blur(70px)",
-          }}
-        />
-
-        <div
-          className="absolute inset-0 animate-gradient-shift opacity-30"
-          style={{
-            background: "linear-gradient(135deg, rgba(27, 77, 77, 0.1) 0%, rgba(212, 175, 185, 0.15) 30%, rgba(184, 168, 196, 0.1) 60%, rgba(74, 155, 155, 0.05) 100%)",
-            backgroundSize: "400% 400%",
-          }}
-        />
-
-        <div
-          className="absolute inset-0 opacity-5 animate-light-rays"
-          style={{
-            background: "repeating-linear-gradient(45deg, transparent, transparent 60px, rgba(212, 175, 185, 0.15) 60px, rgba(212, 175, 185, 0.15) 120px)",
-          }}
-        />
-
-        <div
-          className="absolute inset-0"
-          style={{
-            background: "radial-gradient(ellipse at center, transparent 0%, rgba(5, 8, 20, 0.6) 100%)",
-          }}
-        />
-      </div>
-    </>
-  );
+  return <canvas ref={canvasRef} className="fixed inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }} />;
 }
 
 // MAIN HOME COMPONENT
@@ -295,26 +257,18 @@ export default function Home() {
       <section
         className="relative flex items-center justify-center text-center overflow-y-auto"
         style={{
-          background: "linear-gradient(135deg, #050814 0%, #0a0e1f 25%, #070b18 50%, #0d0f1a 75%, #050814 100%)",
+          background: "linear-gradient(135deg, #081818 0%, #0a1d1d 25%, #081919 50%, #071616 75%, #081818 100%)",
           minHeight: "100vh",
           paddingTop: "3rem",
           paddingBottom: "3rem",
         }}
       >
-        <AnimatedBackground />
-
-        {/* Top Navy Gradient Fade - Ends BEFORE Logo */}
-        <div 
-          className="absolute top-0 left-0 right-0 pointer-events-none z-20"
-          style={{
-            height: "100px",
-            background: "linear-gradient(180deg, rgba(15, 25, 45, 0.9) 0%, rgba(10, 14, 31, 0.5) 40%, rgba(7, 11, 24, 0.2) 70%, transparent 100%)",
-          }}
-        />
+        <DreamyFireflyAnimation />
 
         <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 w-full pb-8">
-          <div className="mx-auto mb-3 lg:mb-4 w-fit animate-fadeUp" style={{ animationDelay: "80ms" }}>
-            <div className="mx-auto mb-1 flex items-center justify-center">
+          {/* UPDATED LOGO SECTION - FLAT & HIGHER */}
+          <div className="mx-auto mb-8 lg:mb-12 w-fit animate-fadeUp" style={{ animationDelay: "80ms" }}>
+            <div className="mx-auto mb-2 flex items-center justify-center">
               <Image
                 src="/logo-wings.png"
                 alt="WithinYouAi logo"
@@ -323,7 +277,7 @@ export default function Home() {
                 priority
                 className="select-none pointer-events-none lg:hidden"
                 style={{
-                  filter: "drop-shadow(0 0 25px rgba(232, 180, 192, 0.7)) drop-shadow(0 0 50px rgba(245, 232, 220, 0.5))"
+                  filter: "drop-shadow(0 0 25px rgba(52, 211, 153, 0.7)) drop-shadow(0 0 50px rgba(34, 197, 194, 0.5))"
                 }}
               />
               <Image
@@ -334,7 +288,7 @@ export default function Home() {
                 priority
                 className="select-none pointer-events-none hidden lg:block"
                 style={{
-                  filter: "drop-shadow(0 0 25px rgba(232, 180, 192, 0.7)) drop-shadow(0 0 50px rgba(245, 232, 220, 0.5))"
+                  filter: "drop-shadow(0 0 25px rgba(52, 211, 153, 0.7)) drop-shadow(0 0 50px rgba(34, 197, 194, 0.5))"
                 }}
               />
             </div>
@@ -344,15 +298,13 @@ export default function Home() {
               style={{
                 fontFamily: "var(--font-display)",
                 fontSize: "clamp(1.1rem, 2.5vw, 2.2rem)",
-                fontWeight: 400,
+                fontWeight: 700,
                 lineHeight: 1.08,
                 letterSpacing: "0.12em",
-                background: "linear-gradient(135deg, #e8b4c0 0%, #f5e8dc 50%, #d4a5af 100%)",
+                background: "linear-gradient(135deg, #34d399 0%, #22c5c2 50%, #10b981 100%)",
                 backgroundClip: "text",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                textShadow: "0 0 35px rgba(232, 180, 192, 0.6), 0 0 70px rgba(245, 232, 220, 0.4)",
-                filter: "drop-shadow(0 0 25px rgba(232, 180, 192, 0.5))",
               }}
             >
               WITHINYOUAI
@@ -360,7 +312,7 @@ export default function Home() {
             <p 
               className="text-xs tracking-[0.15em] mt-1.5 lg:mt-2 uppercase font-light"
               style={{
-                color: "rgba(180, 200, 200, 0.7)"
+                color: "rgba(52, 211, 153, 0.7)"
               }}
             >
               Self-Discovery
@@ -370,7 +322,7 @@ export default function Home() {
           <div
             className="mx-auto mb-3 lg:mb-4 h-px w-24 lg:w-32 animate-fadeUp"
             style={{ 
-              background: "linear-gradient(90deg, transparent 0%, rgba(232, 180, 192, 0.8) 50%, transparent 100%)",
+              background: "linear-gradient(90deg, transparent 0%, rgba(52, 211, 153, 0.8) 50%, transparent 100%)",
               animationDelay: "160ms" 
             }}
           />
@@ -382,13 +334,13 @@ export default function Home() {
               fontWeight: 500,
               fontSize: "clamp(1.5rem, 3.5vw, 3.5rem)",
               lineHeight: 1.3,
-              background: "linear-gradient(135deg, #e8b4c0 0%, #f5e8dc 40%, #f0ddd0 60%, #d4a5af 100%)",
+              background: "linear-gradient(135deg, #34d399 0%, #22c5c2 40%, #2dd4bf 60%, #10b981 100%)",
               backgroundClip: "text",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               letterSpacing: "0.01em",
-              textShadow: "0 0 70px rgba(232, 180, 192, 0.2)",
-              filter: "drop-shadow(0 0 15px rgba(232, 180, 192, 0.15))",
+              textShadow: "0 0 70px rgba(52, 211, 153, 0.2)",
+              filter: "drop-shadow(0 0 15px rgba(52, 211, 153, 0.15))",
               animationDelay: "240ms",
             }}
           >
@@ -415,30 +367,34 @@ export default function Home() {
                 justifyContent: "center",
                 padding: "1.25rem 2.5rem",
                 fontSize: "1.1rem",
-                fontWeight: 800,
-                letterSpacing: "0.05em",
+                fontWeight: 700,
+                letterSpacing: "0.03em",
                 textTransform: "uppercase",
                 color: "#ffffff",
-                background: "linear-gradient(135deg, #1b4d4d 0%, #2a6b6b 100%)",
-                border: "2px solid rgba(74, 155, 155, 0.4)",
-                borderRadius: "1rem",
-                boxShadow: "0 10px 30px rgba(27, 77, 77, 0.3)",
+                background: "rgba(52, 211, 153, 0.15)",
+                backdropFilter: "blur(20px) saturate(180%)",
+                WebkitBackdropFilter: "blur(20px) saturate(180%)",
+                border: "1px solid rgba(52, 211, 153, 0.3)",
+                borderRadius: "1.2rem",
+                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
                 cursor: "pointer",
-                transition: "all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                 overflow: "hidden",
                 width: "100%",
                 maxWidth: "380px",
               }}
               className="lg:text-xl lg:py-6 lg:px-14"
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-3px)";
-                e.currentTarget.style.boxShadow = "0 0 40px rgba(74, 155, 155, 0.6), 0 20px 50px rgba(27, 77, 77, 0.5)";
-                e.currentTarget.style.background = "linear-gradient(135deg, #2a6b6b 0%, #3a8b8b 100%)";
+                e.currentTarget.style.transform = "translateY(-2px) scale(1.02)";
+                e.currentTarget.style.boxShadow = "0 12px 48px rgba(52, 211, 153, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)";
+                e.currentTarget.style.background = "rgba(52, 211, 153, 0.25)";
+                e.currentTarget.style.borderColor = "rgba(52, 211, 153, 0.5)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 10px 30px rgba(27, 77, 77, 0.3)";
-                e.currentTarget.style.background = "linear-gradient(135deg, #1b4d4d 0%, #2a6b6b 100%)";
+                e.currentTarget.style.transform = "translateY(0) scale(1)";
+                e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)";
+                e.currentTarget.style.background = "rgba(52, 211, 153, 0.15)";
+                e.currentTarget.style.borderColor = "rgba(52, 211, 153, 0.3)";
               }}
             >
               GET PREMIUM – $14.99
@@ -460,33 +416,35 @@ export default function Home() {
                 justifyContent: "center",
                 padding: "1.25rem 2.5rem",
                 fontSize: "1.1rem",
-                fontWeight: 800,
-                letterSpacing: "0.05em",
+                fontWeight: 700,
+                letterSpacing: "0.03em",
                 textTransform: "uppercase",
-                color: "#e8b4c0",
-                background: "rgba(232, 180, 192, 0.08)",
-                border: "2px solid rgba(232, 180, 192, 0.7)",
-                borderRadius: "1rem",
-                backdropFilter: "blur(10px)",
+                color: "rgba(255, 255, 255, 0.9)",
+                background: "rgba(255, 255, 255, 0.08)",
+                backdropFilter: "blur(20px) saturate(180%)",
+                WebkitBackdropFilter: "blur(20px) saturate(180%)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                borderRadius: "1.2rem",
+                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
                 cursor: "pointer",
-                transition: "all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                 width: "100%",
                 maxWidth: "380px",
               }}
               className="lg:text-xl lg:py-6 lg:px-14"
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-3px)";
+                e.currentTarget.style.transform = "translateY(-2px) scale(1.02)";
+                e.currentTarget.style.boxShadow = "0 12px 48px rgba(52, 211, 153, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2)";
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+                e.currentTarget.style.borderColor = "rgba(52, 211, 153, 0.4)";
                 e.currentTarget.style.color = "#ffffff";
-                e.currentTarget.style.background = "rgba(232, 180, 192, 0.2)";
-                e.currentTarget.style.borderColor = "#e8b4c0";
-                e.currentTarget.style.boxShadow = "0 0 40px rgba(232, 180, 192, 0.5), 0 20px 50px rgba(232, 180, 192, 0.3)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.color = "#e8b4c0";
-                e.currentTarget.style.background = "rgba(232, 180, 192, 0.08)";
-                e.currentTarget.style.borderColor = "rgba(232, 180, 192, 0.7)";
-                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.transform = "translateY(0) scale(1)";
+                e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)";
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+                e.currentTarget.style.color = "rgba(255, 255, 255, 0.9)";
               }}
             >
               TRY IT FREE
@@ -494,9 +452,9 @@ export default function Home() {
           </div>
 
           <p
-            className="max-w-5xl mx-auto animate-fadeUp leading-relaxed font-light text-center px-2"
+            className="max-w-4xl mx-auto animate-fadeUp leading-relaxed font-light text-center px-2"
             style={{ 
-              fontSize: "clamp(1.35rem, 3vw, 3rem)",
+              fontSize: "clamp(1.1rem, 2.2vw, 1.85rem)",
               color: "#f8f9fa",
               animationDelay: "400ms",
               letterSpacing: "0.01em",
@@ -517,7 +475,7 @@ export default function Home() {
                 fontSize: "0.95rem"
               }}
             >
-              <span style={{ color: "#e8b4c0", fontSize: "1.15rem" }}>✓</span>
+              <span style={{ color: "#34d399", fontSize: "1.15rem" }}>✓</span>
               <span style={{ color: "#e8e8e8" }}>30-Day Transformation</span>
             </div>
 
@@ -540,14 +498,14 @@ export default function Home() {
                 fontSize: "0.85rem"
               }}
             >
-              <span style={{ color: "#e8b4c0", fontSize: "1.05rem" }}>🔒</span>
+              <span style={{ color: "#34d399", fontSize: "1.05rem" }}>🔒</span>
               <span style={{ color: "#a8a8a8" }}>Bank-Level Encryption</span>
             </div>
           </div>
         </div>
 
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.03),transparent_70%)]" />
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(52,211,153,0.03),transparent_70%)]" />
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-[#081818]/80 via-[#081818]/30 to-transparent" />
       </section>
     </main>
   );
