@@ -1,4 +1,4 @@
-// src/app/discover/page.tsx - COMPLETE WITH BUTTON FIXED
+// src/app/discover/page.tsx - BIGGER TEXT, NARROWER BOXES, QUOTES HIGHER
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
@@ -9,8 +9,36 @@ import { CORE_DISCOVERY_QUESTIONS } from "../../lib/discoveryQuestions";
 import RoadmapDashboard from "../../components/RoadmapDashboard";
 import DreamyFireflyAnimation from "../../components/DreamyFireflyAnimation";
 
-// Session storage helpers
 const SESSION_STORAGE_KEY = "withinyouai_sessions";
+
+// MOTIVATIONAL QUOTES
+const MOTIVATIONAL_QUOTES = [
+  { quote: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+  { quote: "Your time is limited, don't waste it living someone else's life.", author: "Steve Jobs" },
+  { quote: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
+  { quote: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
+  { quote: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+  { quote: "The only impossible journey is the one you never begin.", author: "Tony Robbins" },
+  { quote: "Your limitation—it's only your imagination.", author: "Anonymous" },
+  { quote: "Great things never come from comfort zones.", author: "Anonymous" },
+  { quote: "Dream it. Wish it. Do it.", author: "Anonymous" },
+  { quote: "Success doesn't just find you. You have to go out and get it.", author: "Anonymous" },
+  { quote: "The harder you work for something, the greater you'll feel when you achieve it.", author: "Anonymous" },
+  { quote: "Dream bigger. Do bigger.", author: "Anonymous" },
+  { quote: "Don't stop when you're tired. Stop when you're done.", author: "Anonymous" },
+  { quote: "Wake up with determination. Go to bed with satisfaction.", author: "Anonymous" },
+  { quote: "Do something today that your future self will thank you for.", author: "Sean Patrick Flanery" },
+  { quote: "Little things make big days.", author: "Anonymous" },
+  { quote: "It's going to be hard, but hard does not mean impossible.", author: "Anonymous" },
+  { quote: "Don't wait for opportunity. Create it.", author: "Anonymous" },
+  { quote: "Sometimes we're tested not to show our weaknesses, but to discover our strengths.", author: "Anonymous" },
+  { quote: "The key to success is to focus on goals, not obstacles.", author: "Anonymous" },
+  { quote: "Dream it. Believe it. Build it.", author: "Anonymous" },
+  { quote: "What you get by achieving your goals is not as important as what you become by achieving your goals.", author: "Zig Ziglar" },
+  { quote: "Be yourself; everyone else is already taken.", author: "Oscar Wilde" },
+  { quote: "The best time to plant a tree was 20 years ago. The second best time is now.", author: "Chinese Proverb" },
+  { quote: "Your life does not get better by chance, it gets better by change.", author: "Jim Rohn" },
+];
 
 function getSessionCount(): number {
   if (typeof window === "undefined") return 0;
@@ -44,7 +72,7 @@ function DiscoverPageContent() {
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan") || "free";
   
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(1);
   const [userAnswers, setUserAnswers] = useState<string[]>([]);
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -53,6 +81,7 @@ function DiscoverPageContent() {
   const [finalReport, setFinalReport] = useState<any>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [currentQuote, setCurrentQuote] = useState(MOTIVATIONAL_QUOTES[0]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -68,29 +97,20 @@ function DiscoverPageContent() {
 
   useEffect(() => {
     if (messages.length === 0 && canStartSession(plan)) {
-      setMessages([{
-        role: "assistant",
-        content: `Welcome to your transformation journey! 🌟\n\nI'm here to help you discover your true calling through a personalized conversation based on proven psychology frameworks like Ikigai, 7 Habits, and Self-Determination Theory.\n\nAre you ready to begin?`,
-      }]);
+      setMessages([
+        {
+          role: "assistant",
+          content: `Perfect! Let's dive deep into understanding YOU.\n\n**Question 1/${CORE_DISCOVERY_QUESTIONS.length}**: ${CORE_DISCOVERY_QUESTIONS[0].question}`
+        }
+      ]);
+      track("discovery_started", { plan });
     }
   }, [messages.length, plan]);
 
-  const handleStartDiscovery = () => {
-    if (!canStartSession(plan)) {
-      setShowUpgradeModal(true);
-      return;
-    }
-
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", content: "Yes, I'm ready!" },
-      { 
-        role: "assistant", 
-        content: `Perfect! Let's dive deep into understanding YOU.\n\nThis discovery process is built on research from:\n- Ikigai (Japanese longevity research)\n- 7 Habits of Highly Effective People\n- Flow State psychology\n- Self-Determination Theory\n\n**Question 1/${CORE_DISCOVERY_QUESTIONS.length}**: ${CORE_DISCOVERY_QUESTIONS[0].question}` 
-      },
-    ]);
-    setCurrentStep(1);
-    track("discovery_started", { plan });
+  // Change quote randomly
+  const changeQuote = () => {
+    const randomIndex = Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length);
+    setCurrentQuote(MOTIVATIONAL_QUOTES[randomIndex]);
   };
 
   const handleSubmitAnswer = async () => {
@@ -101,6 +121,9 @@ function DiscoverPageContent() {
     setCurrentAnswer("");
     setIsLoading(true);
     setMessages((prev) => [...prev, { role: "user", content: answer }]);
+
+    // Change quote on each submission
+    changeQuote();
 
     try {
       const response = await fetch("/api/chat", {
@@ -291,37 +314,60 @@ Be SPECIFIC and PERSONALIZED. Reference their actual answers. No generic advice.
         <DreamyFireflyAnimation />
         
         <div className="relative z-10 max-w-md mx-auto px-6 text-center">
-          <div className="visionos-card-large rounded-[40px] p-8 space-y-6">
+          <div style={{
+            background: "rgba(52, 211, 153, 0.08)",
+            backdropFilter: "blur(30px) saturate(180%)",
+            WebkitBackdropFilter: "blur(30px) saturate(180%)",
+            border: "1px solid rgba(52, 211, 153, 0.2)",
+            borderRadius: "2.5rem",
+            padding: "3rem 2rem",
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+          }}>
             <div className="text-5xl mb-4">🚀</div>
-            <h2 className="text-3xl font-bold" style={{ color: "#34d399" }}>
+            <h2 className="text-3xl font-bold mb-4" style={{ color: "#34d399" }}>
               You've Used Your Free Session
             </h2>
-            <p className="text-white/70 text-lg">
+            <p className="text-white/70 text-lg mb-6">
               Upgrade to Premium to unlock unlimited discovery sessions, save your reports, and access your personalized dashboard.
             </p>
-            <div className="space-y-3 py-4">
-              <div className="flex items-center gap-3 text-white/80">
-                <span className="text-[#34d399]">✓</span>
-                <span>Unlimited transformation sessions</span>
-              </div>
-              <div className="flex items-center gap-3 text-white/80">
-                <span className="text-[#34d399]">✓</span>
-                <span>Full interactive roadmaps</span>
-              </div>
-              <div className="flex items-center gap-3 text-white/80">
-                <span className="text-[#34d399]">✓</span>
-                <span>PDF downloads & progress tracking</span>
-              </div>
+            <div className="space-y-3 mb-6">
+              {["Unlimited transformation sessions", "Full interactive roadmaps", "PDF downloads & progress tracking"].map((item, i) => (
+                <div key={i} className="flex items-center gap-3 text-white/80">
+                  <span className="text-[#34d399]">✓</span>
+                  <span>{item}</span>
+                </div>
+              ))}
             </div>
             <button
               onClick={handleUpgrade}
-              className="w-full visionos-button px-8 py-4 rounded-[24px] font-semibold text-lg"
+              style={{
+                width: "100%",
+                padding: "1.25rem",
+                fontSize: "1.1rem",
+                fontWeight: 700,
+                color: "#ffffff",
+                background: "rgba(52, 211, 153, 0.15)",
+                backdropFilter: "blur(20px) saturate(180%)",
+                border: "1px solid rgba(52, 211, 153, 0.3)",
+                borderRadius: "1.5rem",
+                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+                cursor: "pointer",
+                transition: "all 0.3s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(52, 211, 153, 0.25)";
+                e.currentTarget.style.transform = "scale(1.02)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(52, 211, 153, 0.15)";
+                e.currentTarget.style.transform = "scale(1)";
+              }}
             >
               Upgrade to Premium - $14.99/mo
             </button>
             <button
               onClick={() => window.location.href = "/"}
-              className="text-white/60 hover:text-white/90 transition text-sm"
+              className="mt-4 text-white/60 hover:text-white/90 transition text-sm"
             >
               ← Back to Home
             </button>
@@ -339,6 +385,34 @@ Be SPECIFIC and PERSONALIZED. Reference their actual answers. No generic advice.
       }} />
       
       <DreamyFireflyAnimation />
+
+      {/* FIXED BACK BUTTON - TOP LEFT CORNER */}
+      <div className="absolute top-6 left-6 z-20">
+        <a 
+          href="/" 
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            fontSize: "1rem",
+            fontWeight: 600,
+            letterSpacing: "0.05em",
+            background: "linear-gradient(135deg, #34d399 0%, #22c5c2 50%, #10b981 100%)",
+            backgroundClip: "text",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            transition: "all 0.3s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateX(-3px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateX(0)";
+          }}
+        >
+          ← Back
+        </a>
+      </div>
 
       <header className="relative z-10 pt-6 sm:pt-8 pb-4">
         <div className="flex flex-col items-center gap-3">
@@ -364,83 +438,12 @@ Be SPECIFIC and PERSONALIZED. Reference their actual answers. No generic advice.
             WITHINYOUAI
           </h1>
         </div>
-
-        <div className="absolute top-6 sm:top-8 right-4 sm:right-6">
-          <a href="/" className="text-xs sm:text-sm text-white/50 hover:text-white/90 transition font-medium">
-            ← Back
-          </a>
-        </div>
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-4 py-6 sm:py-8 relative z-10">
-        <div className="w-full max-w-5xl">
+      <main className="flex-1 flex flex-col items-center justify-start px-4 pt-12 pb-8 relative z-10">
+        <div className="w-full max-w-4xl">
           
-          {currentStep === 0 && !isComplete ? (
-            <div className="flex flex-col items-center text-center space-y-6 sm:space-y-8 animate-fadeIn">
-              
-              {/* BUTTON FIRST - MOVED UP 100PX */}
-              <div className="mb-4">
-                <button
-                  onClick={handleStartDiscovery}
-                  style={{
-                    position: "relative",
-                    transform: "translateY(-100px)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "1.25rem 2.5rem",
-                    fontSize: "1.1rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.03em",
-                    textTransform: "uppercase",
-                    color: "#ffffff",
-                    background: "rgba(52, 211, 153, 0.15)",
-                    backdropFilter: "blur(20px) saturate(180%)",
-                    WebkitBackdropFilter: "blur(20px) saturate(180%)",
-                    border: "1px solid rgba(52, 211, 153, 0.3)",
-                    borderRadius: "1.2rem",
-                    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
-                    cursor: "pointer",
-                    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-                    overflow: "hidden",
-                    maxWidth: "380px",
-                  }}
-                  className="lg:text-xl lg:py-6 lg:px-14"
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-102px) scale(1.02)";
-                    e.currentTarget.style.boxShadow = "0 12px 48px rgba(52, 211, 153, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)";
-                    e.currentTarget.style.background = "rgba(52, 211, 153, 0.25)";
-                    e.currentTarget.style.borderColor = "rgba(52, 211, 153, 0.5)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(-100px) scale(1)";
-                    e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)";
-                    e.currentTarget.style.background = "rgba(52, 211, 153, 0.15)";
-                    e.currentTarget.style.borderColor = "rgba(52, 211, 153, 0.3)";
-                  }}
-                >
-                  Start My Journey ✨
-                </button>
-              </div>
-
-              {/* THEN "Science-Backed Discovery" */}
-              <p className="text-xl sm:text-2xl md:text-3xl text-white/70 font-light tracking-[0.2em] uppercase">
-                Science-Backed Discovery
-              </p>
-
-              {/* THEN Welcome Messages */}
-              <div className="space-y-5 sm:space-y-6 max-w-3xl px-4 py-4 sm:py-6">
-                {messages.map((msg, idx) => (
-                  <div key={idx} className="animate-fadeUp" style={{ animationDelay: `${idx * 100}ms` }}>
-                    <p className="text-xl sm:text-2xl md:text-3xl text-white/95 leading-relaxed whitespace-pre-wrap font-light">
-                      {msg.content}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          ) : isComplete && finalReport ? (
+          {isComplete && finalReport ? (
             <div className="animate-fadeIn">
               <RoadmapDashboard 
                 data={finalReport}
@@ -450,12 +453,21 @@ Be SPECIFIC and PERSONALIZED. Reference their actual answers. No generic advice.
             </div>
 
           ) : (
-            <div className="space-y-5 sm:space-y-6">
-              <div className="max-h-[60vh] overflow-y-auto space-y-4 sm:space-y-5 px-2 scrollbar-hide">
-                {messages.slice(1).map((msg, idx) => (
+            <div className="space-y-6 sm:space-y-8">
+              {/* CONVERSATION MESSAGES - NARROWER BOXES & BIGGER TEXT */}
+              <div className="max-h-[55vh] overflow-y-auto space-y-6 px-2 scrollbar-hide">
+                {messages.map((msg, idx) => (
                   <div key={idx} className="flex justify-center animate-fadeUp">
-                    <div className="visionos-card w-full max-w-2xl rounded-[32px] px-5 sm:px-7 py-4 sm:py-6">
-                      <p className="text-sm sm:text-base md:text-lg text-white/95 leading-relaxed whitespace-pre-wrap text-left">
+                    <div className="w-full max-w-2xl" style={{
+                      background: "rgba(52, 211, 153, 0.06)",
+                      backdropFilter: "blur(30px) saturate(180%)",
+                      WebkitBackdropFilter: "blur(30px) saturate(180%)",
+                      border: "1px solid rgba(52, 211, 153, 0.15)",
+                      borderRadius: "2rem",
+                      padding: "2.5rem 3rem",
+                      boxShadow: "0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                    }}>
+                      <p className="text-3xl sm:text-4xl md:text-5xl text-white/95 leading-relaxed whitespace-pre-wrap font-light">
                         {msg.content}
                       </p>
                     </div>
@@ -464,10 +476,16 @@ Be SPECIFIC and PERSONALIZED. Reference their actual answers. No generic advice.
 
                 {isLoading && (
                   <div className="flex justify-center">
-                    <div className="visionos-card rounded-[32px] px-6 py-5">
+                    <div style={{
+                      background: "rgba(52, 211, 153, 0.06)",
+                      backdropFilter: "blur(30px) saturate(180%)",
+                      border: "1px solid rgba(52, 211, 153, 0.15)",
+                      borderRadius: "2rem",
+                      padding: "1.5rem 2rem",
+                    }}>
                       <div className="flex gap-2">
                         {[0, 1, 2].map((i) => (
-                          <div key={i} className="w-2.5 h-2.5 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                          <div key={i} className="w-3 h-3 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
                         ))}
                       </div>
                     </div>
@@ -476,8 +494,9 @@ Be SPECIFIC and PERSONALIZED. Reference their actual answers. No generic advice.
                 <div ref={messagesEndRef} />
               </div>
 
+              {/* INPUT BOX - NARROWER */}
               {!isComplete && currentStep > 0 && (
-                <div className="flex justify-center pt-4 sm:pt-6">
+                <div className="flex justify-center pt-4">
                   <div className="w-full max-w-2xl relative">
                     <textarea
                       value={currentAnswer}
@@ -492,13 +511,61 @@ Be SPECIFIC and PERSONALIZED. Reference their actual answers. No generic advice.
                       }}
                       placeholder="Share your thoughts..."
                       disabled={isLoading}
-                      rows={3}
-                      className={`visionos-input w-full px-5 sm:px-7 py-4 sm:py-5 pr-24 sm:pr-28 rounded-[28px] resize-none focus:outline-none text-sm sm:text-base md:text-lg transition-all ${isFocused ? 'visionos-input-focused' : ''}`}
+                      rows={4}
+                      style={{
+                        width: "100%",
+                        padding: "2rem 11rem 2rem 2.5rem",
+                        fontSize: "1.5rem",
+                        lineHeight: "1.6",
+                        color: "rgba(255, 255, 255, 0.95)",
+                        background: isFocused 
+                          ? "rgba(52, 211, 153, 0.08)" 
+                          : "rgba(52, 211, 153, 0.05)",
+                        backdropFilter: "blur(30px) saturate(180%)",
+                        WebkitBackdropFilter: "blur(30px) saturate(180%)",
+                        border: isFocused 
+                          ? "1px solid rgba(52, 211, 153, 0.3)" 
+                          : "1px solid rgba(52, 211, 153, 0.15)",
+                        borderRadius: "1.75rem",
+                        boxShadow: isFocused
+                          ? "0 15px 50px rgba(52, 211, 153, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                          : "0 12px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                        resize: "none",
+                        outline: "none",
+                        transition: "all 0.3s",
+                      }}
+                      className="placeholder:text-white/40"
                     />
                     <button
                       onClick={handleSubmitAnswer}
                       disabled={isLoading || !currentAnswer.trim()}
-                      className="visionos-send-button absolute right-3 sm:right-4 bottom-3 sm:bottom-4 px-6 sm:px-8 py-2 sm:py-3 rounded-[20px] font-semibold text-xs sm:text-sm transition-all disabled:opacity-40"
+                      style={{
+                        position: "absolute",
+                        right: "1rem",
+                        bottom: "1rem",
+                        padding: "1.25rem 3rem",
+                        fontSize: "1.25rem",
+                        fontWeight: 700,
+                        color: "#ffffff",
+                        background: "rgba(52, 211, 153, 0.15)",
+                        backdropFilter: "blur(20px) saturate(180%)",
+                        border: "1px solid rgba(52, 211, 153, 0.3)",
+                        borderRadius: "1.25rem",
+                        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+                        cursor: isLoading || !currentAnswer.trim() ? "not-allowed" : "pointer",
+                        opacity: isLoading || !currentAnswer.trim() ? 0.4 : 1,
+                        transition: "all 0.3s",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isLoading && currentAnswer.trim()) {
+                          e.currentTarget.style.background = "rgba(52, 211, 153, 0.25)";
+                          e.currentTarget.style.transform = "scale(1.02)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(52, 211, 153, 0.15)";
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
                     >
                       Send
                     </button>
@@ -508,6 +575,26 @@ Be SPECIFIC and PERSONALIZED. Reference their actual answers. No generic advice.
             </div>
           )}
         </div>
+
+        {/* MOTIVATIONAL QUOTE AT BOTTOM - MOVED HIGHER */}
+        {!isComplete && (
+          <div className="w-full max-w-2xl mt-auto pt-4 pb-6">
+            <div className="text-center animate-fadeIn">
+              <p className="text-lg sm:text-xl text-white/60 italic leading-relaxed mb-2">
+                "{currentQuote.quote}"
+              </p>
+              <p className="text-sm sm:text-base" style={{
+                background: "linear-gradient(135deg, #34d399 0%, #22c5c2 50%, #10b981 100%)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                fontWeight: 600,
+              }}>
+                — {currentQuote.author}
+              </p>
+            </div>
+          </div>
+        )}
       </main>
 
       <style jsx global>{`
