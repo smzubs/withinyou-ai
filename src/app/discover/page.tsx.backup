@@ -1,0 +1,985 @@
+// src/app/discover/page.tsx - UPDATED VERSION
+// ✨ Research-backed, scientifically rigorous Dream Life transformation
+// 🔬 Integrates: Ikigai, PERMA, Self-Determination Theory, Growth Mindset
+"use client";
+
+import { useState, useEffect, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import Image from "next/image";
+import { track } from "../../lib/gtag";
+import { CORE_DISCOVERY_QUESTIONS } from "../../lib/discoveryQuestions";
+import RoadmapDashboard from "../../components/RoadmapDashboard";
+import DreamyFireflyAnimation from "../../components/DreamyFireflyAnimation";
+
+const SESSION_STORAGE_KEY = "withinyouai_sessions";
+
+const MOTIVATIONAL_QUOTES = [
+  { quote: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+  { quote: "Your time is limited, don't waste it living someone else's life.", author: "Steve Jobs" },
+  { quote: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
+  { quote: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
+  { quote: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+  { quote: "The only impossible journey is the one you never begin.", author: "Tony Robbins" },
+  { quote: "Your limitation—it's only your imagination.", author: "Anonymous" },
+  { quote: "Great things never come from comfort zones.", author: "Anonymous" },
+  { quote: "Dream it. Wish it. Do it.", author: "Anonymous" },
+  { quote: "Success doesn't just find you. You have to go out and get it.", author: "Anonymous" },
+];
+
+const GREETING_MESSAGES = [
+  {
+    title: "✨ Welcome to Your Transformation Journey!",
+    subtitle: "You're about to embark on a profound journey of self-discovery.",
+    body: "The next 15 questions will help unlock the extraordinary potential that's already within you. Be honest, be yourself, and let's discover what truly makes you come alive.",
+    cta: "Begin My Journey"
+  },
+  {
+    title: "🌟 Amazing! You've Taken the First Step",
+    subtitle: "Get ready to discover your true calling and purpose.",
+    body: "This isn't just another questionnaire. These AI-powered questions are designed to reveal insights about yourself you may have never realized. Your dream life is closer than you think.",
+    cta: "Let's Start"
+  },
+  {
+    title: "🚀 Your Future Self Will Thank You",
+    subtitle: "Welcome to a personalized journey toward clarity and purpose.",
+    body: "Over the next few minutes, we'll explore what drives you, what excites you, and what path will lead you to true fulfillment. Answer honestly, and watch the magic unfold.",
+    cta: "I'm Ready!"
+  },
+];
+
+function getSessionCount(): number {
+  if (typeof window === "undefined") return 0;
+  const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+  if (!stored) return 0;
+  try {
+    const data = JSON.parse(stored);
+    return data.count || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function incrementSessionCount() {
+  if (typeof window === "undefined") return;
+  const current = getSessionCount();
+  localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
+    count: current + 1,
+    lastSession: new Date().toISOString()
+  }));
+}
+
+function canStartSession(plan: string): boolean {
+  if (plan === "premium") return true;
+  return getSessionCount() < 1;
+}
+
+type Message = { 
+  role: "user" | "assistant"; 
+  content: string;
+  isQuestion?: boolean;
+};
+
+function DiscoverPageContent() {
+  const searchParams = useSearchParams();
+  const plan = searchParams.get("plan") || "free";
+  
+  const [showGreeting, setShowGreeting] = useState(true);
+  const [greetingMessage] = useState(GREETING_MESSAGES[Math.floor(Math.random() * GREETING_MESSAGES.length)]);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [userAnswers, setUserAnswers] = useState<string[]>([]);
+  const [currentAnswer, setCurrentAnswer] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
+  const [finalReport, setFinalReport] = useState<any>(null);
+  const [isFocused, setIsFocused] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [currentQuote, setCurrentQuote] = useState(MOTIVATIONAL_QUOTES[0]);
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    if (!canStartSession(plan)) {
+      setShowUpgradeModal(true);
+    }
+  }, [plan]);
+
+  const changeQuote = () => {
+    const randomIndex = Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length);
+    setCurrentQuote(MOTIVATIONAL_QUOTES[randomIndex]);
+  };
+
+  const startDiscovery = () => {
+    setShowGreeting(false);
+    setMessages([
+      {
+        role: "assistant",
+        content: `Perfect! Let's dive deep into understanding YOU.\n\n**Question 1/${CORE_DISCOVERY_QUESTIONS.length}**: ${CORE_DISCOVERY_QUESTIONS[0].question}`,
+        isQuestion: true
+      }
+    ]);
+    setCurrentStep(1);
+    track("discovery_started", { plan });
+    
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 300);
+  };
+
+  const handleSubmitAnswer = async () => {
+    if (!currentAnswer.trim()) return;
+
+    const answer = currentAnswer.trim();
+    setUserAnswers((prev) => [...prev, answer]);
+    setCurrentAnswer("");
+    setIsLoading(true);
+    setMessages((prev) => [...prev, { role: "user", content: answer }]);
+
+    changeQuote();
+
+    try {
+      // 🔬 RESEARCH-BACKED ACKNOWLEDGMENT PROMPT
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ 
+            role: "user", 
+            content: `User answered: "${answer}". Give a warm, brief acknowledgment (1-2 sentences) that shows you understand using principles from Carl Rogers' Person-Centered Therapy and Motivational Interviewing.` 
+          }],
+          systemPrompt: `You are a world-class transformation coach trained in:
+- Positive Psychology (Seligman's PERMA model)
+- Carl Rogers' Person-Centered Therapy (unconditional positive regard)
+- Motivational Interviewing techniques (reflective listening)
+- Cognitive Behavioral frameworks
+
+Your acknowledgments should:
+1. Reflect deep understanding (active listening)
+2. Validate emotions without judgment
+3. Highlight strengths (strength-based approach)
+4. Create psychological safety
+5. Build intrinsic motivation
+
+Use principles from:
+- Self-Determination Theory (autonomy support)
+- Growth Mindset language (Carol Dweck)
+- Gottman's relationship research (emotional validation)
+
+Be warm, insightful, and scientifically grounded.`,
+          model: "gpt-4o",
+          temperature: 0.7,
+          maxTokens: 100
+        }),
+      });
+
+      const data = await response.json();
+      const aiAck = data.message;
+
+      if (currentStep < CORE_DISCOVERY_QUESTIONS.length) {
+        const nextQ = CORE_DISCOVERY_QUESTIONS[currentStep];
+        setMessages((prev) => [...prev, {
+          role: "assistant",
+          content: `${aiAck}\n\n**Question ${currentStep + 1}/${CORE_DISCOVERY_QUESTIONS.length}**: ${nextQ.question}`,
+          isQuestion: true
+        }]);
+        setCurrentStep(currentStep + 1);
+        track("question_answered", { step: currentStep, plan });
+      } else {
+        setMessages((prev) => [...prev, { 
+          role: "assistant", 
+          content: `${aiAck}\n\n✨ Amazing! Now analyzing your responses to create your personalized Dream Life roadmap using world-class frameworks...` 
+        }]);
+        await generateFinalReport();
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setMessages((prev) => [...prev, { 
+        role: "assistant", 
+        content: "I'm having trouble connecting. Please try again?" 
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generateFinalReport = async () => {
+    setIsLoading(true);
+    try {
+      incrementSessionCount();
+
+      const userProfile = CORE_DISCOVERY_QUESTIONS.map((q, idx) => 
+        `${q.category} (${q.question}):\n${userAnswers[idx]}\n`
+      ).join("\n");
+
+      // 🔬🔬🔬 WORLD-CLASS RESEARCH-BACKED PROMPT
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ 
+            role: "user", 
+            content: `You are a world-class transformation coach integrating these PROVEN FRAMEWORKS:
+
+🎯 FRAMEWORKS YOU MUST USE:
+1. **Ikigai** (Purpose = Passion ∩ Mission ∩ Vocation ∩ Profession)
+2. **Stanford Life Design Lab** (Bill Burnett & Dave Evans - Prototype-driven exploration)
+3. **PERMA Model** (Wellbeing = Positive Emotion + Engagement + Relationships + Meaning + Accomplishment)
+4. **Self-Determination Theory** (Autonomy + Competence + Relatedness)
+5. **Flow Theory** (Mihaly Csikszentmihalyi - Skill-Challenge balance)
+6. **Growth Mindset** (Carol Dweck - Intelligence is malleable)
+7. **Grit Framework** (Angela Duckworth - Passion × Perseverance)
+8. **Holland RIASEC Career Codes** (Realistic, Investigative, Artistic, Social, Enterprising, Conventional)
+9. **Implementation Intentions** (Peter Gollwitzer - If-Then planning)
+10. **Behavior Design** (BJ Fogg - Motivation × Ability × Prompt)
+
+USER PROFILE:
+${userProfile}
+
+📋 INSTRUCTIONS:
+Create a scientifically-grounded, evidence-based DREAM LIFE roadmap (not just career - HOLISTIC LIFE):
+
+1. **IKIGAI ANALYSIS:**
+   - What they LOVE (passion)
+   - What they're GOOD AT (vocation)
+   - What the WORLD NEEDS (mission)
+   - What they can be PAID FOR (profession)
+
+2. **IDENTIFY HOLLAND CODE** (RIASEC personality type)
+
+3. **ASSESS INTRINSIC MOTIVATORS** (Self-Determination Theory):
+   - Autonomy needs
+   - Competence desires
+   - Relatedness values
+
+4. **DESIGN DREAM LIFE** with:
+   - Career aligned with natural strengths + flow state potential
+   - Lifestyle matching core values
+   - Purpose fulfilling deep meaning
+   - Daily routine enabling peak performance
+   - Work-life integration (not just balance)
+
+5. **RECOMMEND** (Evidence-based only):
+   - **Books:** Bestsellers (4.5+ rating, 10K+ reviews), evidence-based authors, actionable
+   - **Courses:** Credible instructors, proven outcomes, specific skills
+   - **Actions:** Implementation intentions format (if X, then Y)
+   - **Mindset:** Growth mindset + Grit principles + CBT reframing
+
+Use cognitive behavioral reframing, positive psychology interventions, and behavior design principles.
+BE SPECIFIC. BE PERSONALIZED. BE WORLD-CLASS.
+
+Create a detailed JSON response with this EXACT structure:
+{
+  "dreamLife": {
+    "careerTitle": "Specific job title that aligns with their Ikigai",
+    "careerDescription": "2-3 sentence description of their ideal role and impact",
+    "workEnvironment": "Specific work environment (remote, startup, corporate, etc.)",
+    "workLifeBalance": "Their ideal work-life integration",
+    "hollandCode": "Their RIASEC code (e.g., 'IAE - Investigative/Artistic/Enterprising')",
+    "lifestyle": {
+      "location": "Where they'll thrive (city, remote, travel, etc.)",
+      "dailyRoutine": "Their ideal day structure that enables flow",
+      "personalTime": "Hobbies, relationships, growth activities"
+    },
+    "financial": {
+      "targetSalary": "Realistic salary range based on career",
+      "timeline": "Realistic timeframe to achieve this"
+    },
+    "ikigaiAnalysis": {
+      "passion": "What they love doing",
+      "mission": "What the world needs from them",
+      "vocation": "What they're naturally good at",
+      "profession": "What they can be paid for"
+    },
+    "reasons": [
+      "Reason 1: How career aligns with their strengths (reference specific answers)",
+      "Reason 2: How lifestyle matches their values (reference specific answers)",
+      "Reason 3: How purpose fulfills their meaning (reference specific answers)"
+    ],
+    "pathway": [
+      "Step 1: Specific, actionable first step",
+      "Step 2: Skill development step",
+      "Step 3: Experience-building step",
+      "Step 4: Network/community step",
+      "Step 5: Achievement/transition step"
+    ],
+    "flowPotential": "Explain why this life enables flow states (skill-challenge balance)"
+  },
+  "books": [
+    {
+      "title": "Book title (MUST be evidence-based, 4.5+ rating, bestseller)",
+      "author": "Author name (credentialed expert)",
+      "rating": 4.8,
+      "reason": "Why THIS person needs THIS book (personalized, reference their answers)",
+      "amazonLink": "https://amazon.com/...",
+      "framework": "Which framework it teaches (e.g., 'Growth Mindset', 'Flow Theory')"
+    },
+    // Include 3 books total
+  ],
+  "courses": [
+    {
+      "title": "Course title",
+      "provider": "Platform name (Coursera, edX, Udemy, etc.)",
+      "instructor": "Instructor name if notable",
+      "reason": "Why perfect for them (reference their specific goals)",
+      "link": "https://...",
+      "skillsGained": ["Skill 1", "Skill 2", "Skill 3"]
+    },
+    // Include 3 courses total
+  ],
+  "actionPlan": {
+    "week1": [
+      "If [trigger], then [specific action] (Implementation Intention format)",
+      "3-4 specific, behavioral tasks",
+      "Each using BJ Fogg Behavior Model principles"
+    ],
+    "week2": ["3-4 specific actionable tasks"],
+    "week3": ["3-4 specific actionable tasks"],
+    "week4": ["3-4 specific actionable tasks"]
+  },
+  "mindsetShifts": [
+    "From [limiting belief] → To [growth mindset reframe] (using CBT principles)",
+    "5 total mindset shifts based on their specific responses",
+    "Each must be personalized and actionable"
+  ],
+  "obstacles": [
+    {
+      "obstacle": "Specific obstacle from their answers",
+      "solution": "Actionable solution using behavioral science",
+      "framework": "Which framework guides this solution (e.g., 'Implementation Intentions', 'ACT')"
+    },
+    // Include 3-5 obstacles
+  ],
+  "selfDeterminationTheory": {
+    "autonomy": "How this life satisfies their autonomy needs",
+    "competence": "How this enables mastery and growth",
+    "relatedness": "How this fulfills connection needs"
+  }
+}
+
+🎯 QUALITY REQUIREMENTS:
+✓ Every recommendation MUST reference specific frameworks
+✓ All books MUST be evidence-based and highly-rated
+✓ All advice MUST be personalized to their actual answers
+✓ Use research-backed language (cite principles, not papers)
+✓ Be the absolute BEST transformation coach in the world
+
+Respond ONLY with valid JSON. No additional text.` 
+          }],
+          systemPrompt: `You are the world's #1 transformation coach combining:
+- Clinical Psychology PhD-level expertise
+- Evidence-based career counseling (Holland, Super, Schein)
+- Positive Psychology (Seligman, Dweck, Duckworth, Csikszentmihalyi)
+- Ikigai & Life Design methodologies (Stanford Lab, Japanese philosophy)
+- Behavioral Science (Fogg, Clear, Cialdini, Kahneman)
+- Flow & Peak Performance research
+- Self-Determination Theory (Ryan & Deci)
+- Logotherapy (Viktor Frankl)
+
+Every recommendation must be:
+✓ Grounded in peer-reviewed research
+✓ Proven effective in studies
+✓ Highly personalized to this individual
+✓ Immediately actionable
+✓ Holistic (career + lifestyle + purpose + wellbeing)
+
+You integrate Stanford Life Design, Japanese Ikigai philosophy, Self-Determination Theory, 
+Growth Mindset research, and Flow Theory into every analysis. 
+
+You are the absolute best transformation coach in the world. Your analysis changes lives.`,
+          model: "gpt-4o",
+          temperature: 0.7,
+          maxTokens: 4000
+        }),
+      });
+
+      const data = await response.json();
+      
+      let reportData;
+      try {
+        const jsonMatch = data.message.match(/```json\n([\s\S]*?)\n```/) || 
+                         data.message.match(/```\n([\s\S]*?)\n```/);
+        const jsonStr = jsonMatch ? jsonMatch[1] : data.message;
+        reportData = JSON.parse(jsonStr);
+      } catch (e) {
+        console.error("Failed to parse JSON, using fallback");
+        // Fallback structure
+        reportData = {
+          dreamLife: {
+            careerTitle: "Your Personalized Dream Life Path",
+            careerDescription: "Based on your responses, we're analyzing your unique strengths and designing your ideal life.",
+            workEnvironment: "Flexible, growth-oriented environment",
+            workLifeBalance: "Healthy integration of work and personal fulfillment",
+            hollandCode: "Analyzing your personality type...",
+            lifestyle: {
+              location: "A place that aligns with your values",
+              dailyRoutine: "Structured for flow and productivity",
+              personalTime: "Balanced with hobbies and relationships"
+            },
+            financial: {
+              targetSalary: "Competitive range for your field",
+              timeline: "12-18 months"
+            },
+            ikigaiAnalysis: {
+              passion: "What you love doing",
+              mission: "What the world needs from you",
+              vocation: "What you're naturally good at",
+              profession: "What you can be paid for"
+            },
+            reasons: [
+              "Your unique combination of skills is valuable",
+              "Your values align with this path",
+              "You have strong potential for growth"
+            ],
+            pathway: [
+              "Clarify your vision and goals",
+              "Develop key skills systematically",
+              "Build experience and portfolio",
+              "Network with professionals",
+              "Execute strategic transition"
+            ],
+            flowPotential: "This path balances your skills with optimal challenges"
+          },
+          books: [
+            {title: "Atomic Habits", author: "James Clear", rating: 4.9, reason: "Build transformative daily habits", amazonLink: "https://amazon.com", framework: "Behavior Design"},
+            {title: "Mindset", author: "Carol Dweck", rating: 4.8, reason: "Develop growth-oriented thinking", amazonLink: "https://amazon.com", framework: "Growth Mindset"},
+            {title: "Designing Your Life", author: "Bill Burnett & Dave Evans", rating: 4.7, reason: "Apply Stanford's life design methodology", amazonLink: "https://amazon.com", framework: "Life Design"}
+          ],
+          courses: [
+            {title: "Career Development Fundamentals", provider: "Coursera", instructor: "Industry experts", reason: "Build foundation skills", link: "https://coursera.org", skillsGained: ["Goal Setting", "Career Planning", "Self-Assessment"]},
+            {title: "Personal Branding Mastery", provider: "LinkedIn Learning", instructor: "", reason: "Stand out professionally", link: "https://linkedin.com/learning", skillsGained: ["Branding", "Networking", "Communication"]},
+            {title: "Peak Performance", provider: "Udemy", instructor: "", reason: "Optimize your productivity", link: "https://udemy.com", skillsGained: ["Focus", "Energy Management", "Flow States"]}
+          ],
+          actionPlan: { 
+            week1: ["Research your target field deeply", "Update your professional profiles", "Connect with 3 people in your field"], 
+            week2: ["Start learning key skill", "Draft transformation plan", "Join relevant community"],
+            week3: ["Apply to 5 opportunities", "Schedule informational interviews", "Update materials"],
+            week4: ["Follow up strategically", "Continue skill development", "Reflect and adjust"]
+          },
+          mindsetShifts: [
+            "From fixed abilities → Growth through practice",
+            "From perfection → Progress and iteration",
+            "From fear → Curiosity and experimentation",
+            "From comparison → Personal growth journey",
+            "From waiting → Creating opportunities"
+          ],
+          obstacles: [
+            {obstacle: "Fear of change", solution: "Take one small action daily (Implementation Intentions)", framework: "Behavior Design"},
+            {obstacle: "Imposter syndrome", solution: "Reframe with growth mindset principles", framework: "CBT + Growth Mindset"}
+          ],
+          selfDeterminationTheory: {
+            autonomy: "Provides freedom and self-direction",
+            competence: "Enables skill mastery and growth",
+            relatedness: "Builds meaningful connections"
+          }
+        };
+      }
+
+      setFinalReport(reportData);
+      setIsComplete(true);
+      setMessages((prev) => [...prev, { 
+        role: "assistant", 
+        content: "🎉 Your Dream Life roadmap is ready! Scroll down to explore your personalized journey." 
+      }]);
+      track("discovery_completed", { plan });
+    } catch (error) {
+      console.error("Report generation error:", error);
+      setMessages((prev) => [...prev, { 
+        role: "assistant", 
+        content: "I had trouble generating your report. Please try refreshing the page." 
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpgrade = () => {
+    track("upgrade_clicked", { source: "discover_page" });
+    window.location.href = "https://buy.stripe.com/test_your_stripe_link";
+  };
+
+  if (showUpgradeModal && !canStartSession(plan)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+        <div className="fixed inset-0" style={{ 
+          zIndex: 0,
+          background: "linear-gradient(135deg, #050f0f 0%, #071515 25%, #060f10 50%, #040c0c 75%, #050f0f 100%)",
+        }} />
+        <DreamyFireflyAnimation />
+        
+        <div className="relative z-10 max-w-md mx-auto px-6 text-center">
+          <div style={{
+            background: "rgba(52, 211, 153, 0.08)",
+            backdropFilter: "blur(30px) saturate(180%)",
+            WebkitBackdropFilter: "blur(30px) saturate(180%)",
+            border: "1px solid rgba(52, 211, 153, 0.2)",
+            borderRadius: "2.5rem",
+            padding: "3rem 2rem",
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+          }}>
+            <div className="text-5xl mb-4">🚀</div>
+            <h2 className="text-3xl font-bold mb-4" style={{ color: "#34d399" }}>
+              You've Used Your Free Session
+            </h2>
+            <p className="text-white/70 text-lg mb-6">
+              Upgrade to Premium to unlock unlimited discovery sessions, save your reports, and access your personalized dashboard.
+            </p>
+            <div className="space-y-3 mb-6">
+              {["Unlimited transformation sessions", "Full interactive roadmaps", "PDF downloads & progress tracking"].map((item, i) => (
+                <div key={i} className="flex items-center gap-3 text-white/80">
+                  <span className="text-[#34d399]">✓</span>
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={handleUpgrade}
+              style={{
+                width: "100%",
+                padding: "1.25rem",
+                fontSize: "1.1rem",
+                fontWeight: 700,
+                color: "#ffffff",
+                background: "rgba(52, 211, 153, 0.15)",
+                backdropFilter: "blur(20px) saturate(180%)",
+                border: "1px solid rgba(52, 211, 153, 0.3)",
+                borderRadius: "1.5rem",
+                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+                cursor: "pointer",
+                transition: "all 0.3s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(52, 211, 153, 0.25)";
+                e.currentTarget.style.transform = "scale(1.02)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(52, 211, 153, 0.15)";
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            >
+              Upgrade to Premium - $14.99/mo
+            </button>
+            <button
+              onClick={() => window.location.href = "/"}
+              className="mt-4 text-white/60 hover:text-white/90 transition text-sm"
+            >
+              ← Back to Home
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
+      <div className="fixed inset-0" style={{ 
+        zIndex: 0,
+        background: "linear-gradient(135deg, #050f0f 0%, #071515 25%, #060f10 50%, #040c0c 75%, #050f0f 100%)",
+      }} />
+      
+      <DreamyFireflyAnimation />
+
+      {/* BACK BUTTON */}
+      <div className="absolute top-6 left-6 z-20">
+        <a 
+          href="/" 
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            fontSize: "1rem",
+            fontWeight: 600,
+            letterSpacing: "0.05em",
+            background: "linear-gradient(135deg, #34d399 0%, #22c5c2 50%, #10b981 100%)",
+            backgroundClip: "text",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            transition: "all 0.3s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateX(-3px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateX(0)";
+          }}
+        >
+          ← Back
+        </a>
+      </div>
+
+      <header className="relative z-10 pt-6 sm:pt-8 pb-4">
+        <div className="flex flex-col items-center gap-3">
+          <Image 
+            src="/logo-wings.png" 
+            alt="WithinYouAi" 
+            width={70} 
+            height={70} 
+            priority 
+            className="select-none animate-float"
+            style={{ filter: "drop-shadow(0 0 20px rgba(52, 211, 153, 0.6))" }} 
+          />
+          <h1 
+            className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-[0.15em]"
+            style={{
+              fontFamily: "var(--font-display)",
+              background: "linear-gradient(135deg, #34d399 0%, #22c5c2 30%, #34d399 60%, #10b981 100%)",
+              backgroundClip: "text",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            WITHINYOUAI
+          </h1>
+        </div>
+      </header>
+
+      {/* PROGRESS BAR */}
+      {!showGreeting && !isComplete && currentStep > 0 && (
+        <div style={{ position: "relative", zIndex: 10, maxWidth: "64rem", margin: "0 auto 1rem auto", padding: "0 1.5rem", width: "100%" }}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-white/60">Progress</span>
+            <span className="text-sm font-semibold" style={{
+              background: "linear-gradient(135deg, #34d399 0%, #22c5c2 50%, #10b981 100%)",
+              backgroundClip: "text",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}>
+              {currentStep}/{CORE_DISCOVERY_QUESTIONS.length}
+            </span>
+          </div>
+          <div style={{
+            height: "6px",
+            background: "rgba(255, 255, 255, 0.1)",
+            borderRadius: "10px",
+            overflow: "hidden",
+            backdropFilter: "blur(10px)",
+          }}>
+            <div 
+              style={{
+                height: "100%",
+                width: `${(currentStep / CORE_DISCOVERY_QUESTIONS.length) * 100}%`,
+                background: "linear-gradient(90deg, #34d399 0%, #22c5c2 50%, #10b981 100%)",
+                borderRadius: "10px",
+                transition: "width 0.5s ease-out",
+                boxShadow: "0 0 20px rgba(52, 211, 153, 0.6)",
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      <main className="flex-1 flex flex-col items-center justify-start px-4 pt-4 pb-8 relative z-10">
+        
+        {/* GREETING SCREEN */}
+        {showGreeting ? (
+          <div style={{ maxWidth: "64rem", margin: "0 auto", padding: "0 1.5rem", width: "100%" }} className="animate-fadeIn">
+            <div style={{
+              background: "rgba(52, 211, 153, 0.06)",
+              backdropFilter: "blur(40px) saturate(180%)",
+              WebkitBackdropFilter: "blur(40px) saturate(180%)",
+              border: "1px solid rgba(52, 211, 153, 0.2)",
+              borderRadius: "2.5rem",
+              padding: "3.5rem 3rem",
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+              textAlign: "center",
+            }}>
+              <h2 className="text-4xl sm:text-5xl font-bold mb-4" style={{ 
+                background: "linear-gradient(135deg, #34d399 0%, #22c5c2 50%, #10b981 100%)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}>
+                {greetingMessage.title}
+              </h2>
+              <p className="text-xl sm:text-2xl text-white/80 mb-6 font-light">
+                {greetingMessage.subtitle}
+              </p>
+              <p className="text-lg text-white/70 leading-relaxed mb-8 max-w-xl mx-auto">
+                {greetingMessage.body}
+              </p>
+              <button
+                onClick={startDiscovery}
+                style={{
+                  padding: "1.25rem 3.5rem",
+                  fontSize: "1.2rem",
+                  fontWeight: 700,
+                  color: "#ffffff",
+                  background: "rgba(52, 211, 153, 0.15)",
+                  backdropFilter: "blur(20px) saturate(180%)",
+                  border: "1px solid rgba(52, 211, 153, 0.3)",
+                  borderRadius: "1.5rem",
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+                  cursor: "pointer",
+                  transition: "all 0.3s",
+                }}
+                className="animate-pulse-slow"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(52, 211, 153, 0.25)";
+                  e.currentTarget.style.transform = "scale(1.05)";
+                  e.currentTarget.style.boxShadow = "0 12px 48px rgba(52, 211, 153, 0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(52, 211, 153, 0.15)";
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.3)";
+                }}
+              >
+                {greetingMessage.cta}
+              </button>
+            </div>
+          </div>
+
+        ) : isComplete && finalReport ? (
+          <div className="w-full animate-fadeIn">
+            <RoadmapDashboard 
+              data={finalReport}
+              isPremium={plan === "premium"}
+              onUpgrade={handleUpgrade}
+            />
+          </div>
+
+        ) : (
+          // MAIN GLASS CONTAINER - iMessage Style
+          <div style={{ maxWidth: "64rem", margin: "0 auto", padding: "0 1.5rem", width: "100%" }}>
+            <div style={{
+              background: "rgba(52, 211, 153, 0.05)",
+              backdropFilter: "blur(50px) saturate(180%)",
+              WebkitBackdropFilter: "blur(50px) saturate(180%)",
+              border: "1px solid rgba(52, 211, 153, 0.2)",
+              borderRadius: "2.5rem",
+              padding: "2rem",
+              boxShadow: "0 25px 70px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+              minHeight: "60vh",
+              display: "flex",
+              flexDirection: "column",
+            }}>
+              
+              {/* MESSAGES AREA */}
+              <div className="flex-1 overflow-y-auto space-y-4 px-2 pb-4 scrollbar-hide">
+                {messages.map((msg, idx) => (
+                  <div 
+                    key={idx} 
+                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-slideUp`}
+                  >
+                    <div 
+                      style={{
+                        maxWidth: msg.role === "user" ? "75%" : "85%",
+                        padding: msg.role === "user" ? "1rem 1.5rem" : "1.5rem 2rem",
+                        background: msg.role === "user"
+                          ? "rgba(52, 211, 153, 0.2)"
+                          : "rgba(255, 255, 255, 0.08)",
+                        backdropFilter: "blur(20px)",
+                        WebkitBackdropFilter: "blur(20px)",
+                        border: msg.role === "user"
+                          ? "1px solid rgba(52, 211, 153, 0.3)"
+                          : "1px solid rgba(255, 255, 255, 0.15)",
+                        borderRadius: msg.role === "user" 
+                          ? "1.5rem 1.5rem 0.5rem 1.5rem"
+                          : "1.5rem 1.5rem 1.5rem 0.5rem",
+                        boxShadow: msg.role === "user"
+                          ? "0 4px 20px rgba(52, 211, 153, 0.15)"
+                          : "0 4px 20px rgba(0, 0, 0, 0.2)",
+                      }}
+                    >
+                      <p 
+                        className="text-white/95 leading-relaxed whitespace-pre-wrap"
+                        style={{
+                          fontSize: msg.role === "user" ? "1.1rem" : msg.isQuestion ? "1.3rem" : "1.1rem",
+                          fontWeight: msg.isQuestion ? 500 : 400,
+                        }}
+                      >
+                        {msg.content}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+
+                {/* TYPING INDICATOR */}
+                {isLoading && (
+                  <div className="flex justify-start animate-fadeIn">
+                    <div style={{
+                      padding: "1rem 1.5rem",
+                      background: "rgba(255, 255, 255, 0.08)",
+                      backdropFilter: "blur(20px)",
+                      border: "1px solid rgba(255, 255, 255, 0.15)",
+                      borderRadius: "1.5rem 1.5rem 1.5rem 0.5rem",
+                    }}>
+                      <div className="flex gap-2 items-center">
+                        <span className="text-white/60 text-sm mr-2">AI is thinking</span>
+                        {[0, 1, 2].map((i) => (
+                          <div 
+                            key={i} 
+                            className="w-2 h-2 rounded-full animate-bounce" 
+                            style={{ 
+                              background: "linear-gradient(135deg, #34d399 0%, #22c5c2 100%)",
+                              animationDelay: `${i * 0.15}s`,
+                              boxShadow: "0 0 10px rgba(52, 211, 153, 0.5)",
+                            }} 
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* INPUT AREA */}
+              {!isComplete && currentStep > 0 && (
+                <div className="pt-4 border-t border-white/10">
+                  <div className="flex gap-3 items-end">
+                    <textarea
+                      ref={inputRef}
+                      value={currentAnswer}
+                      onChange={(e) => setCurrentAnswer(e.target.value)}
+                      onFocus={() => setIsFocused(true)}
+                      onBlur={() => setIsFocused(false)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSubmitAnswer();
+                        }
+                      }}
+                      placeholder="Share your thoughts..."
+                      disabled={isLoading}
+                      rows={3}
+                      style={{
+                        flex: 1,
+                        padding: "1rem 1.5rem",
+                        fontSize: "1.1rem",
+                        lineHeight: "1.5",
+                        color: "rgba(255, 255, 255, 0.95)",
+                        background: isFocused 
+                          ? "rgba(255, 255, 255, 0.12)" 
+                          : "rgba(255, 255, 255, 0.08)",
+                        backdropFilter: "blur(20px)",
+                        WebkitBackdropFilter: "blur(20px)",
+                        border: isFocused 
+                          ? "1px solid rgba(52, 211, 153, 0.4)" 
+                          : "1px solid rgba(255, 255, 255, 0.2)",
+                        borderRadius: "1.25rem",
+                        boxShadow: isFocused
+                          ? "0 8px 30px rgba(52, 211, 153, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                          : "0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                        resize: "none",
+                        outline: "none",
+                        transition: "all 0.3s",
+                      }}
+                      className="placeholder:text-white/40"
+                    />
+                    <button
+                      onClick={handleSubmitAnswer}
+                      disabled={isLoading || !currentAnswer.trim()}
+                      style={{
+                        padding: "1rem 2rem",
+                        fontSize: "1.1rem",
+                        fontWeight: 700,
+                        color: "#ffffff",
+                        background: isLoading || !currentAnswer.trim()
+                          ? "rgba(52, 211, 153, 0.1)"
+                          : "rgba(52, 211, 153, 0.2)",
+                        backdropFilter: "blur(20px) saturate(180%)",
+                        border: "1px solid rgba(52, 211, 153, 0.3)",
+                        borderRadius: "1.25rem",
+                        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+                        cursor: isLoading || !currentAnswer.trim() ? "not-allowed" : "pointer",
+                        opacity: isLoading || !currentAnswer.trim() ? 0.4 : 1,
+                        transition: "all 0.3s",
+                        flexShrink: 0,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isLoading && currentAnswer.trim()) {
+                          e.currentTarget.style.background = "rgba(52, 211, 153, 0.3)";
+                          e.currentTarget.style.transform = "scale(1.03)";
+                          e.currentTarget.style.boxShadow = "0 8px 30px rgba(52, 211, 153, 0.3)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(52, 211, 153, 0.2)";
+                        e.currentTarget.style.transform = "scale(1)";
+                        e.currentTarget.style.boxShadow = "0 4px 20px rgba(0, 0, 0, 0.3)";
+                      }}
+                    >
+                      Send
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* MOTIVATIONAL QUOTES */}
+        {!isComplete && !showGreeting && (
+          <div style={{ maxWidth: "64rem", margin: "1.5rem auto 0 auto", padding: "0 1.5rem", width: "100%" }}>
+            <div className="text-center animate-fadeIn">
+              <p className="text-base sm:text-lg text-white/50 italic leading-relaxed mb-2">
+                "{currentQuote.quote}"
+              </p>
+              <p className="text-sm" style={{
+                background: "linear-gradient(135deg, #34d399 0%, #22c5c2 50%, #10b981 100%)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                fontWeight: 600,
+              }}>
+                — {currentQuote.author}
+              </p>
+            </div>
+          </div>
+        )}
+      </main>
+
+      <style jsx global>{`
+        @keyframes fadeIn { 
+          from { opacity: 0; } 
+          to { opacity: 1; } 
+        }
+        @keyframes slideUp { 
+          from { opacity: 0; transform: translateY(20px); } 
+          to { opacity: 1; transform: translateY(0); } 
+        }
+        @keyframes float { 
+          0%, 100% { transform: translateY(0px); } 
+          50% { transform: translateY(-8px); } 
+        }
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.85; }
+        }
+        .animate-fadeIn { 
+          animation: fadeIn 0.8s ease-out; 
+        }
+        .animate-slideUp { 
+          animation: slideUp 0.5s ease-out forwards; 
+        }
+        .animate-float { 
+          animation: float 3s ease-in-out infinite; 
+        }
+        .animate-pulse-slow {
+          animation: pulse-slow 3s ease-in-out infinite;
+        }
+        .scrollbar-hide::-webkit-scrollbar { 
+          display: none; 
+        }
+        .scrollbar-hide { 
+          -ms-overflow-style: none; 
+          scrollbar-width: none; 
+        }
+      `}</style>
+    </div>
+  );
+}
+
+export default function DiscoverPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DiscoverPageContent />
+    </Suspense>
+  );
+}
