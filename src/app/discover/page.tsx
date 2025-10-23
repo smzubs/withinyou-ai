@@ -1,14 +1,17 @@
-// src/app/discover/page.tsx - WOW FACTOR VERSION! 🔥
-// ✨ Wider container, left-side progress, minimal AI responses, enhanced aesthetics
+// app/discover/page.tsx - FIXED VERSION WITH INTERACTIVE REPORT
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
-import { track } from "../../lib/gtag";
 import { CORE_DISCOVERY_QUESTIONS } from "../../lib/discoveryQuestions";
-import RoadmapDashboard from "../../components/RoadmapDashboard";
 import DreamyFireflyAnimation from "../../components/DreamyFireflyAnimation";
+import dynamic from 'next/dynamic';
+
+// Dynamically import the interactive dashboard (client-side only)
+const InteractiveDreamLifeDashboard = dynamic(
+  () => import('../../components/InteractiveDreamLifeDashboard'),
+  { ssr: false }
+);
 
 const SESSION_STORAGE_KEY = "withinyouai_sessions";
 
@@ -18,11 +21,6 @@ const MOTIVATIONAL_QUOTES = [
   { quote: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
   { quote: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
   { quote: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
-  { quote: "The only impossible journey is the one you never begin.", author: "Tony Robbins" },
-  { quote: "Your limitation—it's only your imagination.", author: "Anonymous" },
-  { quote: "Great things never come from comfort zones.", author: "Anonymous" },
-  { quote: "Dream it. Wish it. Do it.", author: "Anonymous" },
-  { quote: "Success doesn't just find you. You have to go out and get it.", author: "Anonymous" },
 ];
 
 const GREETING_MESSAGES = [
@@ -32,21 +30,9 @@ const GREETING_MESSAGES = [
     body: "The next 15 questions will help unlock the extraordinary potential that's already within you. Be honest, be yourself, and let's discover what truly makes you come alive.",
     cta: "Begin My Journey"
   },
-  {
-    title: "🌟 Amazing! You've Taken the First Step",
-    subtitle: "Get ready to discover your true calling and purpose.",
-    body: "This isn't just another questionnaire. These AI-powered questions are designed to reveal insights about yourself you may have never realized. Your dream life is closer than you think.",
-    cta: "Let's Start"
-  },
-  {
-    title: "🚀 Your Future Self Will Thank You",
-    subtitle: "Welcome to a personalized journey toward clarity and purpose.",
-    body: "Over the next few minutes, we'll explore what drives you, what excites you, and what path will lead you to true fulfillment. Answer honestly, and watch the magic unfold.",
-    cta: "I'm Ready!"
-  },
 ];
 
-// 🎯 MINIMAL AI RESPONSES - Just acknowledge and move on!
+// 🎯 MINIMAL AI RESPONSES
 const QUICK_ACKNOWLEDGMENTS = [
   "Got it! ✓",
   "Received ✓",
@@ -95,135 +81,236 @@ function DiscoverPageContent() {
   const plan = searchParams.get("plan") || "free";
   
   const [showGreeting, setShowGreeting] = useState(true);
-  const [greetingMessage] = useState(GREETING_MESSAGES[Math.floor(Math.random() * GREETING_MESSAGES.length)]);
+  const [greetingMessage] = useState(GREETING_MESSAGES[0]);
   const [currentStep, setCurrentStep] = useState(0);
   const [userAnswers, setUserAnswers] = useState<string[]>([]);
-  const [currentAnswer, setCurrentAnswer] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [currentInput, setCurrentInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [currentQuote, setCurrentQuote] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [finalReport, setFinalReport] = useState<any>(null);
-  const [isFocused, setIsFocused] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [currentQuote, setCurrentQuote] = useState(MOTIVATIONAL_QUOTES[0]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // 🎯 Check session limit
+  // Check if user can start
   useEffect(() => {
-    if (!canStartSession(plan)) {
+    if (!canStartSession(plan) && !showGreeting) {
       setShowUpgradeModal(true);
     }
-  }, [plan]);
+  }, [plan, showGreeting]);
 
-  // 🔄 Rotate quotes
+  // Rotate quotes
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentQuote(MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)]);
+      setCurrentQuote((prev) => (prev + 1) % MOTIVATIONAL_QUOTES.length);
     }, 8000);
     return () => clearInterval(interval);
   }, []);
 
-  // 📜 Auto-scroll
+  // Auto-scroll messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 🎯 Auto-focus
-  useEffect(() => {
-    if (!isLoading && !showGreeting && !isComplete) {
-      inputRef.current?.focus();
-    }
-  }, [isLoading, showGreeting, isComplete, currentStep]);
-
   const handleBeginJourney = () => {
+    if (!canStartSession(plan)) {
+      setShowUpgradeModal(true);
+      return;
+    }
     setShowGreeting(false);
-    track("begin_discovery", { plan });
-    setTimeout(() => {
-      setMessages([
-        { 
-          role: "assistant", 
-          content: CORE_DISCOVERY_QUESTIONS[0].question,
-          isQuestion: true 
-        }
-      ]);
-    }, 300);
+    // Ask first question
+    const firstQuestion = CORE_DISCOVERY_QUESTIONS[0];
+    setMessages([{
+      role: "assistant",
+      content: firstQuestion.question,
+      isQuestion: true
+    }]);
+    setTimeout(() => inputRef.current?.focus(), 100);
   };
 
   const handleSubmitAnswer = async () => {
-    if (!currentAnswer.trim()) return;
+    if (!currentInput.trim() || isLoading) return;
 
-    const userMessage = currentAnswer.trim();
-    setCurrentAnswer("");
+    const answer = currentInput.trim();
+    setCurrentInput("");
+    
+    // Add user message
+    const userMessage: Message = { role: "user", content: answer };
+    setMessages(prev => [...prev, userMessage]);
+    
+    // Update answers
+    const newAnswers = [...userAnswers, answer];
+    setUserAnswers(newAnswers);
+    setCurrentStep(newAnswers.length);
+    
     setIsLoading(true);
 
-    // Add user message
-    setMessages(prev => [...prev, { role: "user", content: userMessage }]);
-    
-    // Save answer
-    const newAnswers = [...userAnswers, userMessage];
-    setUserAnswers(newAnswers);
-
-    // 🎯 MINIMAL RESPONSE - Just acknowledge quickly!
-    const quickAck = QUICK_ACKNOWLEDGMENTS[Math.floor(Math.random() * QUICK_ACKNOWLEDGMENTS.length)];
-    
-    // Show quick acknowledgment
-    setTimeout(() => {
-      setMessages(prev => [...prev, { 
-        role: "assistant", 
-        content: quickAck 
-      }]);
-    }, 400);
-
-    // Move to next question or finish
     setTimeout(async () => {
-      const nextStep = currentStep + 1;
-      
-      if (nextStep < CORE_DISCOVERY_QUESTIONS.length) {
-        // Next question
-        setCurrentStep(nextStep);
-        setMessages(prev => [...prev, { 
-          role: "assistant", 
-          content: CORE_DISCOVERY_QUESTIONS[nextStep].question,
-          isQuestion: true 
-        }]);
-        setIsLoading(false);
-      } else {
-        // All done - generate final report
-        setMessages(prev => [...prev, { 
-          role: "assistant", 
-          content: "Perfect! Generating your personalized Dream Life roadmap... ✨" 
-        }]);
+      // Add minimal acknowledgment
+      const acknowledgment = QUICK_ACKNOWLEDGMENTS[Math.floor(Math.random() * QUICK_ACKNOWLEDGMENTS.length)];
+      setMessages(prev => [...prev, { role: "assistant", content: acknowledgment }]);
 
-        track("complete_discovery", { plan, questionCount: CORE_DISCOVERY_QUESTIONS.length });
+      // If not done, ask next question
+      if (newAnswers.length < CORE_DISCOVERY_QUESTIONS.length) {
+        setTimeout(() => {
+          const nextQuestion = CORE_DISCOVERY_QUESTIONS[newAnswers.length];
+          setMessages(prev => [...prev, {
+            role: "assistant",
+            content: nextQuestion.question,
+            isQuestion: true
+          }]);
+          setIsLoading(false);
+          inputRef.current?.focus();
+        }, 600);
+      } else {
+        // COMPLETED! Generate report
         incrementSessionCount();
 
-        // Generate final report
+        // Show loading message
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          content: "✨ Analyzing your responses and crafting your personalized Dream Life roadmap... This will take about 30 seconds."
+        }]);
+
         try {
+          // Call API to generate report
           const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              messages: newAnswers.map((answer, idx) => ({
+              messages: [{
                 role: 'user',
-                content: `${CORE_DISCOVERY_QUESTIONS[idx].question}\n\nAnswer: ${answer}`
-              })),
-              systemPrompt: `You are an expert life coach and career counselor. Generate a comprehensive Dream Life roadmap based on the user's answers. Include: Dream Career Title, Ikigai Analysis, Holland Code, Flow Potential, Books, Action Plan, Mindset Shifts, Courses, and Obstacles. Format as JSON.`,
+                content: `Based on these 15 discovery questions and answers, generate a comprehensive Dream Life roadmap. Return ONLY valid JSON (no markdown, no code blocks).
+
+Questions and Answers:
+${newAnswers.map((ans, idx) => `
+Q${idx + 1}: ${CORE_DISCOVERY_QUESTIONS[idx].question}
+A${idx + 1}: ${ans}
+`).join('\n')}
+
+Generate a JSON object with this EXACT structure:
+{
+  "profile": {
+    "name": "Your Dream Life",
+    "tagline": "A personalized journey to fulfillment",
+    "score": 94,
+    "level": "Visionary"
+  },
+  "dreamCareer": {
+    "title": "[specific career title based on answers]",
+    "ikigai": {
+      "passion": "[what they love doing]",
+      "mission": "[what the world needs from them]",
+      "vocation": "[what they're good at]",
+      "profession": "[what they can be paid for]"
+    },
+    "hollandCode": "[personality type]",
+    "flowPotential": "[High/Exceptional with %]",
+    "environment": "[ideal work environment]",
+    "lifestyle": "[desired lifestyle]",
+    "financialGoal": "[income goal]",
+    "reasons": [
+      "[reason 1]",
+      "[reason 2]",
+      "[reason 3]",
+      "[reason 4]"
+    ]
+  },
+  "books": [
+    {
+      "title": "[book title]",
+      "author": "[author]",
+      "reason": "[why this book]",
+      "impact": "[expected impact]",
+      "readingTime": "[hours]"
+    }
+  ],
+  "actionPlan": [
+    {
+      "week": 1,
+      "theme": "[week theme]",
+      "tasks": ["[task 1]", "[task 2]", "[task 3]"],
+      "milestone": "[week milestone]"
+    }
+  ],
+  "mindsetShifts": [
+    {
+      "from": "[limiting belief]",
+      "to": "[empowering belief]",
+      "why": "[reason]",
+      "technique": "[how to practice]"
+    }
+  ],
+  "courses": [
+    {
+      "title": "[course title]",
+      "platform": "[platform]",
+      "duration": "[duration]",
+      "cost": "[cost]",
+      "roi": "[value proposition]"
+    }
+  ],
+  "obstacles": [
+    {
+      "obstacle": "[challenge]",
+      "solution": "[practical solution]",
+      "resources": ["[resource 1]", "[resource 2]"]
+    }
+  ],
+  "metrics": {
+    "ikigaiAlignment": 94,
+    "careerFit": 88,
+    "workLifeBalance": 91,
+    "growthPotential": 96,
+    "financialViability": 85
+  }
+}
+
+CRITICAL: Return ONLY the JSON object. No explanations, no markdown, no code blocks.`
+              }],
+              systemPrompt: `You are an expert career counselor and life coach. Generate personalized, actionable, research-backed guidance. Return ONLY valid JSON.`,
               model: 'gpt-4o',
-              temperature: 0.7,
-              maxTokens: 3000,
+              temperature: 0.8,
+              maxTokens: 4000,
             }),
           });
 
+          if (!response.ok) {
+            throw new Error('API request failed');
+          }
+
           const data = await response.json();
-          setFinalReport(data);
+          console.log('API Response:', data);
+
+          // Parse the response
+          let reportData;
+          if (data.message) {
+            // Clean the response (remove markdown code blocks if present)
+            let cleanedMessage = data.message.trim();
+            cleanedMessage = cleanedMessage.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+            
+            try {
+              reportData = JSON.parse(cleanedMessage);
+            } catch (parseError) {
+              console.error('JSON Parse Error:', parseError);
+              throw new Error('Failed to parse AI response');
+            }
+          } else {
+            throw new Error('No message in API response');
+          }
+
+          // Set the report and mark as complete
+          setFinalReport(reportData);
           setIsComplete(true);
+          
         } catch (error) {
           console.error('Error generating report:', error);
           setMessages(prev => [...prev, { 
             role: "assistant", 
-            content: "I apologize, but there was an error generating your roadmap. Please try again." 
+            content: "I apologize, but there was an error generating your roadmap. Please refresh and try again, or contact support if the issue persists." 
           }]);
         }
         
@@ -239,9 +326,9 @@ function DiscoverPageContent() {
     }
   };
 
-  // 🎯 If completed, show roadmap
+  // 🎯 If completed, show interactive dashboard
   if (isComplete && finalReport) {
-    return <RoadmapDashboard report={finalReport} plan={plan} />;
+    return <InteractiveDreamLifeDashboard reportData={finalReport} plan={plan} />;
   }
 
   // 🚫 Upgrade modal
@@ -275,7 +362,7 @@ function DiscoverPageContent() {
             Session Limit Reached
           </h2>
           <p style={{ color: "rgba(255, 255, 255, 0.7)", marginBottom: "2rem", lineHeight: "1.6" }}>
-            You've already used your free discovery session. Upgrade to Premium for unlimited access and your complete transformation roadmap!
+            You've already used your free discovery session. Upgrade to Premium for unlimited access!
           </p>
           <a
             href="/?upgrade=true"
@@ -288,18 +375,9 @@ function DiscoverPageContent() {
               fontWeight: "600",
               textDecoration: "none",
               boxShadow: "0 0 20px rgba(20, 184, 166, 0.4)",
-              transition: "all 0.3s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 0 30px rgba(20, 184, 166, 0.6)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 0 20px rgba(20, 184, 166, 0.4)";
             }}
           >
-            Upgrade to Premium - $14.99/mo
+            Upgrade to Premium
           </a>
         </div>
       </div>
@@ -311,69 +389,52 @@ function DiscoverPageContent() {
       minHeight: "100vh",
       background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
       display: "flex",
-      flexDirection: "column",
       position: "relative",
       overflow: "hidden",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     }}>
       <DreamyFireflyAnimation />
 
-      {/* 🎯 LEFT-SIDE ANIMATED PROGRESS INDICATOR */}
+      {/* 📊 LEFT PROGRESS RING */}
       {!showGreeting && (
         <div style={{
           position: "fixed",
           left: "2rem",
           top: "50%",
           transform: "translateY(-50%)",
-          zIndex: 50,
+          zIndex: 100,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           gap: "1rem",
         }}>
-          {/* Circular Progress Ring */}
+          {/* Circular Progress */}
           <div style={{ position: "relative", width: "120px", height: "120px" }}>
-            {/* Background circle */}
-            <svg
-              width="120"
-              height="120"
-              style={{
-                transform: "rotate(-90deg)",
-                filter: "drop-shadow(0 0 10px rgba(20, 184, 166, 0.3))",
-              }}
-            >
+            <svg width="120" height="120" style={{ transform: "rotate(-90deg)" }}>
               <circle
                 cx="60"
                 cy="60"
-                r="52"
+                r="50"
                 fill="none"
                 stroke="rgba(255, 255, 255, 0.1)"
                 strokeWidth="8"
               />
-              {/* Progress circle */}
               <circle
                 cx="60"
                 cy="60"
-                r="52"
+                r="50"
                 fill="none"
-                stroke="url(#progressGradient)"
+                stroke="#14b8a6"
                 strokeWidth="8"
+                strokeDasharray={2 * Math.PI * 50}
+                strokeDashoffset={2 * Math.PI * 50 * (1 - currentStep / CORE_DISCOVERY_QUESTIONS.length)}
                 strokeLinecap="round"
-                strokeDasharray={`${2 * Math.PI * 52}`}
-                strokeDashoffset={`${2 * Math.PI * 52 * (1 - currentStep / CORE_DISCOVERY_QUESTIONS.length)}`}
                 style={{
                   transition: "stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
-                  filter: "drop-shadow(0 0 8px rgba(20, 184, 166, 0.8))",
+                  filter: "drop-shadow(0 0 10px rgba(20, 184, 166, 0.6))",
                 }}
               />
-              <defs>
-                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#14b8a6" />
-                  <stop offset="100%" stopColor="#0d9488" />
-                </linearGradient>
-              </defs>
             </svg>
-            
-            {/* Center text */}
             <div style={{
               position: "absolute",
               inset: 0,
@@ -383,19 +444,15 @@ function DiscoverPageContent() {
               justifyContent: "center",
             }}>
               <div style={{
-                fontSize: "2rem",
+                fontSize: "1.5rem",
                 fontWeight: "700",
-                color: "#14b8a6",
-                lineHeight: 1,
-                textShadow: "0 0 20px rgba(20, 184, 166, 0.6)",
-                transition: "all 0.3s ease",
+                color: "white",
               }}>
                 {currentStep}
               </div>
               <div style={{
-                fontSize: "0.75rem",
+                fontSize: "0.875rem",
                 color: "rgba(255, 255, 255, 0.6)",
-                marginTop: "0.25rem",
               }}>
                 of {CORE_DISCOVERY_QUESTIONS.length}
               </div>
@@ -491,22 +548,14 @@ function DiscoverPageContent() {
                 boxShadow: "0 0 30px rgba(20, 184, 166, 0.4)",
                 transition: "all 0.3s ease",
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-3px)";
-                e.currentTarget.style.boxShadow = "0 0 40px rgba(20, 184, 166, 0.6)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 0 30px rgba(20, 184, 166, 0.4)";
-              }}
             >
-              {greetingMessage.cta} →
+              {greetingMessage.cta}
             </button>
           </div>
         </div>
       )}
 
-      {/* 💬 MAIN CHAT INTERFACE */}
+      {/* 💬 CHAT INTERFACE */}
       {!showGreeting && (
         <div style={{
           flex: 1,
@@ -514,48 +563,46 @@ function DiscoverPageContent() {
           flexDirection: "column",
           position: "relative",
           zIndex: 10,
-          maxWidth: "90rem", // 🎯 WIDER! (was 64rem)
-          width: "100%",
-          margin: "0 auto",
-          padding: "0 2rem",
+          marginLeft: "180px",
         }}>
-          {/* Header */}
+          {/* Fixed Header */}
           <div style={{
-            padding: "1.5rem 0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "1rem",
+            padding: "2rem",
+            background: "rgba(15, 23, 42, 0.8)",
+            backdropFilter: "blur(20px)",
             borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-            background: "transparent",
+            position: "sticky",
+            top: 0,
+            zIndex: 20,
           }}>
-            <div style={{
-              fontSize: "3rem",
-              animation: "sparkle 2s ease-in-out infinite",
-            }}>
-              ✨
-            </div>
             <h1 style={{
               fontSize: "2rem",
               fontWeight: "700",
-              background: "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
+              color: "white",
+              marginBottom: "0.5rem",
             }}>
-              WithinYouAI
+              Discovery Session
             </h1>
+            <p style={{
+              fontSize: "1rem",
+              color: "#14b8a6",
+              animation: "fadeIn 1s ease-in-out infinite",
+            }}>
+              {MOTIVATIONAL_QUOTES[currentQuote].quote}
+              <span style={{ color: "rgba(255, 255, 255, 0.5)", fontSize: "0.875rem" }}>
+                {" "}— {MOTIVATIONAL_QUOTES[currentQuote].author}
+              </span>
+            </p>
           </div>
 
-          {/* Messages Container */}
+          {/* Messages */}
           <div style={{
             flex: 1,
             overflowY: "auto",
-            padding: "2rem 0",
+            padding: "2rem",
             display: "flex",
             flexDirection: "column",
             gap: "1.5rem",
-            minHeight: 0,
           }}>
             {messages.map((msg, idx) => (
               <div
@@ -563,60 +610,65 @@ function DiscoverPageContent() {
                 style={{
                   display: "flex",
                   justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
-                  animation: "fadeInUp 0.4s ease-out",
+                  animation: "fadeIn 0.4s ease-out",
                 }}
               >
                 <div style={{
+                  maxWidth: "70%",
+                  padding: "1.25rem 1.5rem",
+                  borderRadius: "1.25rem",
                   background: msg.role === "user" 
                     ? "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)"
                     : "rgba(255, 255, 255, 0.05)",
-                  backdropFilter: msg.role === "assistant" ? "blur(10px)" : "none",
-                  border: msg.role === "assistant" ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
+                  backdropFilter: "blur(20px)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
                   color: "white",
-                  padding: "1.25rem 1.75rem",
-                  borderRadius: msg.role === "user" ? "1.5rem 1.5rem 0.25rem 1.5rem" : "1.5rem 1.5rem 1.5rem 0.25rem",
-                  maxWidth: "70%",
-                  boxShadow: msg.role === "user" 
-                    ? "0 0 20px rgba(20, 184, 166, 0.3)"
-                    : "0 8px 32px rgba(0, 0, 0, 0.2)",
                   fontSize: "1.125rem",
                   lineHeight: "1.7",
-                  fontWeight: msg.isQuestion ? "500" : "400",
+                  boxShadow: msg.role === "user" 
+                    ? "0 0 20px rgba(20, 184, 166, 0.3)"
+                    : "none",
                 }}>
                   {msg.content}
                 </div>
               </div>
             ))}
-            
-            {/* Typing indicator */}
+
             {isLoading && (
               <div style={{
                 display: "flex",
                 justifyContent: "flex-start",
-                animation: "fadeInUp 0.4s ease-out",
               }}>
                 <div style={{
+                  padding: "1rem 1.5rem",
+                  borderRadius: "1.25rem",
                   background: "rgba(255, 255, 255, 0.05)",
-                  backdropFilter: "blur(10px)",
+                  backdropFilter: "blur(20px)",
                   border: "1px solid rgba(255, 255, 255, 0.1)",
-                  padding: "1.25rem 1.75rem",
-                  borderRadius: "1.5rem 1.5rem 1.5rem 0.25rem",
                   display: "flex",
                   gap: "0.5rem",
                 }}>
-                  {[0, 1, 2].map((i) => (
-                    <div
-                      key={i}
-                      style={{
-                        width: "10px",
-                        height: "10px",
-                        borderRadius: "50%",
-                        background: "#14b8a6",
-                        animation: `bounce 1.4s ease-in-out ${i * 0.2}s infinite`,
-                        boxShadow: "0 0 10px rgba(20, 184, 166, 0.6)",
-                      }}
-                    />
-                  ))}
+                  <div style={{
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    background: "#14b8a6",
+                    animation: "bounce 1.4s ease-in-out infinite",
+                  }} />
+                  <div style={{
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    background: "#14b8a6",
+                    animation: "bounce 1.4s ease-in-out 0.2s infinite",
+                  }} />
+                  <div style={{
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    background: "#14b8a6",
+                    animation: "bounce 1.4s ease-in-out 0.4s infinite",
+                  }} />
                 </div>
               </div>
             )}
@@ -626,124 +678,77 @@ function DiscoverPageContent() {
 
           {/* Input Area */}
           <div style={{
-            padding: "1.5rem 0",
-            background: "transparent",
+            padding: "2rem",
+            background: "rgba(15, 23, 42, 0.8)",
+            backdropFilter: "blur(20px)",
             borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+            position: "sticky",
+            bottom: 0,
           }}>
             <div style={{
-              background: "rgba(255, 255, 255, 0.05)",
-              backdropFilter: "blur(20px)",
-              border: isFocused ? "2px solid #14b8a6" : "2px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "1.5rem",
-              padding: "1rem 1.5rem",
               display: "flex",
               gap: "1rem",
-              alignItems: "center",
-              transition: "all 0.3s ease",
-              boxShadow: isFocused ? "0 0 30px rgba(20, 184, 166, 0.3)" : "0 8px 32px rgba(0, 0, 0, 0.2)",
+              maxWidth: "90rem",
+              margin: "0 auto",
             }}>
               <textarea
                 ref={inputRef}
-                value={currentAnswer}
-                onChange={(e) => setCurrentAnswer(e.target.value)}
+                value={currentInput}
+                onChange={(e) => setCurrentInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                placeholder="Type your answer here..."
+                placeholder="Type your answer here... (Press Enter to send)"
                 disabled={isLoading}
                 style={{
                   flex: 1,
-                  background: "transparent",
-                  border: "none",
-                  outline: "none",
+                  padding: "1.25rem",
+                  borderRadius: "1rem",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  backdropFilter: "blur(10px)",
+                  border: "2px solid rgba(20, 184, 166, 0.3)",
                   color: "white",
                   fontSize: "1.125rem",
                   resize: "none",
-                  minHeight: "2.5rem",
-                  maxHeight: "10rem",
+                  minHeight: "120px",
                   fontFamily: "inherit",
-                  lineHeight: "1.6",
+                  outline: "none",
                 }}
-                rows={1}
               />
               <button
                 onClick={handleSubmitAnswer}
-                disabled={!currentAnswer.trim() || isLoading}
+                disabled={!currentInput.trim() || isLoading}
                 style={{
-                  background: currentAnswer.trim() && !isLoading 
+                  padding: "1.25rem 2rem",
+                  borderRadius: "1rem",
+                  background: currentInput.trim() 
                     ? "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)"
                     : "rgba(255, 255, 255, 0.1)",
                   color: "white",
-                  padding: "0.875rem 2rem",
-                  borderRadius: "1rem",
-                  border: "none",
                   fontWeight: "600",
-                  fontSize: "1rem",
-                  cursor: currentAnswer.trim() && !isLoading ? "pointer" : "not-allowed",
+                  border: "none",
+                  cursor: currentInput.trim() ? "pointer" : "not-allowed",
+                  boxShadow: currentInput.trim() ? "0 0 20px rgba(20, 184, 166, 0.4)" : "none",
                   transition: "all 0.3s ease",
-                  boxShadow: currentAnswer.trim() && !isLoading 
-                    ? "0 0 20px rgba(20, 184, 166, 0.4)"
-                    : "none",
-                  opacity: currentAnswer.trim() && !isLoading ? 1 : 0.5,
-                }}
-                onMouseEnter={(e) => {
-                  if (currentAnswer.trim() && !isLoading) {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 0 30px rgba(20, 184, 166, 0.6)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = currentAnswer.trim() && !isLoading 
-                    ? "0 0 20px rgba(20, 184, 166, 0.4)"
-                    : "none";
                 }}
               >
-                Send →
+                Send
               </button>
             </div>
-          </div>
-
-          {/* Quote */}
-          <div style={{
-            padding: "1rem 0",
-            textAlign: "center",
-            color: "rgba(255, 255, 255, 0.6)",
-            fontSize: "0.875rem",
-            background: "transparent",
-            transition: "opacity 0.5s ease",
-          }}>
-            <p style={{ fontStyle: "italic", marginBottom: "0.25rem" }}>
-              "{currentQuote.quote}"
-            </p>
-            <p style={{ fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.4)" }}>
-              — {currentQuote.author}
-            </p>
           </div>
         </div>
       )}
 
-      {/* 🎨 ANIMATIONS */}
       <style jsx>{`
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        
         @keyframes sparkle {
           0%, 100% { transform: rotate(0deg) scale(1); }
-          25% { transform: rotate(-10deg) scale(1.1); }
-          75% { transform: rotate(10deg) scale(1.1); }
+          50% { transform: rotate(180deg) scale(1.1); }
         }
-        
         @keyframes bounce {
-          0%, 60%, 100% { transform: translateY(0); }
-          30% { transform: translateY(-10px); }
+          0%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-8px); }
         }
       `}</style>
     </div>
@@ -752,19 +757,7 @@ function DiscoverPageContent() {
 
 export default function DiscoverPage() {
   return (
-    <Suspense fallback={
-      <div style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "white",
-        fontSize: "1.25rem",
-      }}>
-        Loading...
-      </div>
-    }>
+    <Suspense fallback={<div>Loading...</div>}>
       <DiscoverPageContent />
     </Suspense>
   );
